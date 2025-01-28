@@ -1,0 +1,304 @@
+---
+title: "London_model_simulation"
+author: "Tianyi Chen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Setup
+In this simulation i will compare the localizer $\hat{t}$'s performance by using different metrics to construct distance matrix and then apply CMDS and only use the first dimension. Now we have 4 metrics: $W_1$, $W_2$, $d_{MV}$ with true 1-1 correspondence, and just use square root of average degree as representation of the TSG. After we get 4 mirrors/representation, i apply $l_{\infty}$ localizer to get $\hat{t}$ and then MSE = $\left(\frac{\hat{t} - t^*}{m}\right)^2$. 
+
+Last week I showed a result that is confusing, which is not reproducible and meaningless, since there was a bug. After i fixed the bug, something similarly disturbing showed up again, which you will see in the figure: using $d_{MV}$ with true 1-1, the MSE increase as $m$ increases when $n=200$. This doesn't have a good explanation, since we know as $m$ increases, the $d_{MV}$'s 1st dim is more linear as London model is asymptotically Euclidean 1-d piecewise linear. We also conjecture(in our paper) for fixed $n$,i.e fixed variance, as $m$ increases, we should still be able to learn the piecewise linear and consistently estimate the changepoint.
+
+## My explanation
+What i found is this conjecture is not invalidated, and the problem is not the $d_{MV}$ but the $l_{\infty}$ localizer, it is **too sensitive** to the outlier, and when n is small, the variance is big, and when m is large, the outlier turns to appear more often at the boundary point, and this cause the $l_{\infty}$ localizer to localize $\hat{t}$ often near the boundary, causing MSE big. This can be observed from the histograms later. Also here is an illustration i found from simulations:
+
+```{r}
+par(mfrow = c(1,2))
+
+m = tmax = length(example_df.mds_dMV_m_12)
+a = find_slope_changepoint_with_plot(example_df.mds_dMV_m_12, doplot = T)
+ecp_l1 <-  linf_error(example_df.mds_dMV_m_12)[2]
+abline(v = ecp_l1, col='green' ,lwd = 2, lty = 2)
+res <- linf_cp(1:tmax, example_df.mds_dMV_m_12 , ecp_l1)
+t = 1:tmax
+y_fit = res[2] + res[3] * (t -  ecp_l1) + 
+  (res[4] - res[3]) * (t -  ecp_l1) * (t >  ecp_l1)
+lines(1:tmax, y_fit, col = 'green' , lwd = 2)
+legend("bottomright", legend = c("Fitted Line linf", "Estimated_CP linf"),
+       col = c( "green", "green"), lty = c( 1, 2), lwd = 2, cex =0.5)
+
+m = tmax = length(example_df.mds_dMV_m_40)
+b = find_slope_changepoint_with_plot(example_df.mds_dMV_m_40, doplot = T)
+ecp_l1 = linf_error(example_df.mds_dMV_m_40)[2]
+abline(v = ecp_l1, col='green' ,lwd = 2, lty = 2)
+res <- linf_cp(1:tmax, example_df.mds_dMV_m_40 , ecp_l1)
+t = 1:tmax
+y_fit = res[2] + res[3] * (t -  ecp_l1) + 
+  (res[4] - res[3]) * (t -  ecp_l1) * (t >  ecp_l1)
+
+lines(1:tmax, y_fit, col = 'green' , lwd = 2)
+legend("bottomright", legend = c("Fitted Line linf", "Estimated_CP linf"),
+       col = c( "green", "green"), lty = c( 1, 2), lwd = 2, cex=0.5)
+
+```
+
+Thus i implement, as we always wanted, the $l_2$ localizer ,which is:
+$$
+\hat{t},\hat{\alpha},\hat{\beta}_L,\hat{\beta}_R=\underset{\substack{t'\in\mathcal{T}\\ \alpha, \beta_L, \beta_R, \beta_L\neq \beta_R}}{\mathrm{argmin}}
+\sum_{t \in \mathcal{T} } \left( \alpha + \beta_L(t-t')+(\beta_R-\beta_L)(t-t')I_{\{t > t'\}} - \hat{\psi}(t) \right)^2.
+$$
+And as shown in the figure, now using $d_{MV}$ metric still works ans as $m$ increases, MSE decreases. **However, the question that why $d_{MV}$ has such large variance and so noisy is still mysterious.**
+
+```{r,eval=FALSE, echo=TRUE}
+pacman::p_load(segmented, igraph, RSpectra, locfit, tidyverse, doParallel, broom, vegan, Matrix)
+library(igraph)
+library(iGraphMatch)
+library(ggrepel)
+pacman::p_load("doParallel")
+registerDoParallel(detectCores()-1)
+```
+
+## Simulation with n= 200 
+```{r setup, eval=FALSE, echo=TRUE}
+set.seed(2)
+n = 200
+p <- 0.3
+q <- 0.4
+nmc = 500
+
+# Define the values of mm
+mm <- c(12, 20, 30, 40)
+
+# Initialize a list to store the results
+list_name_l2 <- paste0("results_list_l2", "_n_",n)
+assign(list_name_l2, list())
+
+list_name <- paste0("results_list", "_n_",n)
+assign(list_name, list())
+# Define error types
+error_types_l2 <- c("error_avg_degree_l2", "error_W1_l2", "error_W2_l2", "error_dMV_l2")
+error_types <- c("error_avg_degree", "error_W1", "error_W2", "error_dMV")
+
+# Loop over each value of m in mm
+for (i in 1:length(mm)) {
+  tmax <- m <- mm[i]
+  tstar <- tmax / 2
+  delta <- (1-0.1)/tmax
+  # Dynamically create and assign a matrix
+  matrix_name_l2 <- paste0("error_matrix_l2_m_", m, "_n_",n)
+  matrix_name <- paste0("error_matrix_m_", m, "_n_",n)
+  
+  assign(matrix_name_l2, matrix(nrow = 4, ncol = nmc))
+  assign(matrix_name, matrix(nrow = 4, ncol = nmc))
+  
+  for (mc in 1:nmc) {
+    df <- doSim_London(n, tmax, delta, p, q, tstar)
+    
+    # Compute square root of avg_edges
+    sqrt_edges <- sqrt(unlist(df$avg_edges))
+    
+    # Compute distance matrices
+    Dhat_W1 <- getD_W1(df$xhat)
+    Dhat_W2 <- getD_W2(df$xhat)
+    D_dMV  <- getD(df$xhat)
+    
+    # Perform MDS
+    df.mds_W1 <- doMDS(Dhat_W1, doplot = FALSE)
+    df.mds_W2 <- doMDS(Dhat_W2, doplot = FALSE)
+    df.mds_dMV <- doMDS(D_dMV, doplot = FALSE)
+    
+    # Calculate errors using l2
+    error_avg_degree_l2 <- find_slope_changepoint_with_plot(sqrt_edges, doplot = F)$error
+    error_W1_l2 <- find_slope_changepoint_with_plot(df.mds_W1$mds[,1], doplot = F)$error
+    error_W2_l2 <- find_slope_changepoint_with_plot(df.mds_W2$mds[,1], doplot = F)$error
+    error_dMV_l2 <- find_slope_changepoint_with_plot(df.mds_dMV$mds[,1], doplot = F)$error
+    
+    error_avg_degree <- linf_error(sqrt_edges)[1]
+    error_W1 <- linf_error(df.mds_W1$mds[,1])[1]
+    error_W2 <- linf_error(df.mds_W2$mds[,1])[1]
+    error_dMV <- linf_error(df.mds_dMV$mds[,1])[1]
+    #print(error_dMV)
+    
+    # Retrieve and update the matrix dynamically
+    temp_matrix_l2 <- get(matrix_name_l2)
+    temp_matrix_l2[, mc] <- c(error_avg_degree_l2, error_W1_l2, error_W2_l2, error_dMV_l2)
+    assign(matrix_name_l2, temp_matrix_l2)
+    
+    temp_matrix <- get(matrix_name)
+    temp_matrix[, mc] <- c(error_avg_degree, error_W1, error_W2, error_dMV)
+    assign(matrix_name, temp_matrix)
+    
+    
+    if (mc %% 100 == 0) {
+      print(c(i, mc))
+    }
+  }
+  
+  # Retrieve the updated matrix
+  final_matrix <- get(matrix_name)
+  
+  # Compute mean squared error and confidence interval
+  mse_mean <- apply(final_matrix^2, 1, mean)
+  mse_sd <- apply(final_matrix^2, 1, sd)
+  conf_interval <- 1.96 * mse_sd / sqrt(nmc)
+  
+  # Create a dataframe for the current m value
+  temp_df <- data.frame(
+    m = rep(m, 4),
+    error_type = error_types,
+    Lower_CI = mse_mean - conf_interval,
+    Mean_MSE = mse_mean,
+    Upper_CI = mse_mean + conf_interval
+  )
+  
+  current_list <- get(list_name)
+  current_list[[i]] <- temp_df
+  
+  assign(list_name, current_list)
+  
+  final_matrix_l2 <- get(matrix_name_l2)
+  
+  # Compute mean squared error and confidence interval
+  mse_mean_l2 <- apply(final_matrix_l2^2, 1, mean)
+  mse_sd_l2 <- apply(final_matrix_l2^2, 1, sd)
+  conf_interval_l2 <- 1.96 * mse_sd_l2 / sqrt(nmc)
+  
+  # Create a dataframe for the current m value
+  temp_df_l2 <- data.frame(
+    m = rep(m, 4),
+    error_type = error_types_l2,
+    Lower_CI = mse_mean_l2 - conf_interval_l2,
+    Mean_MSE = mse_mean_l2,
+    Upper_CI = mse_mean_l2 + conf_interval_l2
+  )
+  current_list_l2 <- get(list_name_l2)
+  current_list_l2[[i]] <- temp_df_l2
+  assign(list_name_l2, current_list_l2)
+}
+summary_df_both <- do.call(rbind, c(get(list_name_l2), get(list_name)))
+
+```
+
+## Summary results shows that $L_2$ localizer performs much better than $l_{\infty}$ Localizer when $n$ small.
+
+```{r}
+plottt1 <- ggplot(summary_df_both , aes(x = m, y = Mean_MSE, color = error_type)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI), width = 0.5) +
+  scale_x_continuous(breaks = mm) +
+  labs(y = 'MSE', x = 'm', title =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q)) +
+  theme(
+    axis.text = element_text(size = 15),
+    axis.title = element_text(size = 15, face = "bold")
+  )
+
+print(plottt1)
+```
+
+
+## results hists for $d_{MV}$ with $l_{\infty}$:
+
+```{r}
+par(mfrow = c(2,2))
+
+hist(error_matrix_m_12_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_20_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_30_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_40_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+
+```
+
+These histograms again show as $m$ larger, using $l_{\infty}$ localizer keeps gets $\hat{t}$ at starting points, -0.4 has lots of mass.  
+
+
+
+## results hists for $d_{MV}$ with $l_{2}$
+
+```{r}
+par(mfrow = c(2,2))
+
+hist(error_matrix_l2_m_12_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_l2_m_20_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_l2_m_30_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_l2_m_40_n_200[4, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+
+```
+While $l_2$ localzier doesn't suffer from this. 
+
+## results hists for avg degree using $l_{\infty}$:
+```{r}
+
+par(mfrow = c(2,2))
+
+hist(error_matrix_m_12_n_200[1, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_20_n_200[1, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_30_n_200[1, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_40_n_200[1, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+
+```
+
+## results hists for $W_1$ using $l_{\infty}$:
+
+```{r}
+
+par(mfrow = c(2,2))
+
+hist(error_matrix_m_12_n_200[2, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_20_n_200[2, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_30_n_200[2, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+hist(error_matrix_m_40_n_200[2, ], breaks = 30, main =  paste('n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q))
+
+```
+

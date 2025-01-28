@@ -9,8 +9,8 @@ registerDoParallel(detectCores()-1)
 
 ## mds_nochange and df_true_nochange generation
 set.seed(2)
-n = 200
-tmax <- m <- 20
+n = 300
+tmax <- m <- 40
 p <- 0.3
 q <- 0.4
 delta <- (1-0.1)/tmax
@@ -25,25 +25,33 @@ df <- doSim_London(n,tmax,delta,p,q,tstar)
 D_True_dMV = true_London_dMV(tmax, tstar , p ,q  )
 
 #summary(as.vector((Dhat_W1 - True_W1_D) / True_W1_D))
-Dhat_W1 = getD_W1(df$xhat)
-Dhat_W2 = getD_W2(df$xhat)
+#Dhat_W1 = getD_W1(df$xhat)
+#Dhat_W2 = getD_W2(df$xhat)
 D_dMV = getD(df$xhat)
 #summary(as.vector((Dhat_W2  - D_dMV ) / D_dMV ))
 
-df.mds_W1 <- doMDS(Dhat_W1, doplot = T)
+#df.mds_W1 <- doMDS(Dhat_W1, doplot = T)
 #df.mds_True_W1 <- doMDS(True_W1_D, doplot = T)
 
-df.mds_W2 <- doMDS(Dhat_W2, doplot = T)
-df.mds_dMV <- doMDS(D_dMV, doplot = T)
-doMDS(D_True_dMV, doplot = T)
+#df.mds_W2 <- doMDS(Dhat_W2, doplot = T)
+df.mds_dMV <- doMDS(D_dMV, doplot = F)
+#doMDS(D_True_dMV, doplot = T)
 ## what makes dMV so noisy? 
 
-linf_error(df.mds_W1$mds[,1])*m
-linf_error(df.mds_dMV$mds[,1])*m
+find_slope_changepoint_with_plot(df.mds_dMV$mds[,1], doplot = T)
+
+
+#linf_error(df.mds_W1$mds[,1])*m
+ecp = linf_error(df.mds_dMV$mds[,1])[2]
+
+plot(1:tmax,df.mds_dMV$mds[,1])
+abline(v=tstar)
+points(x = ecp, y = df.mds_dMV$mds[ecp, 1], pch = 2, col = "red")
+
 linf_error(sqrt(unlist(df$avg_edges)))*m
 
 
-n = 200
+n = 300
 tmax <- m <- 40
 p <- 0.3
 q <- 0.4
@@ -68,10 +76,10 @@ plot(1:tmax, df.mds_dMV$mds[,1])
 
 
 set.seed(2)
-n = 200
+n = 300
 p <- 0.4
 q <- 0.3
-nmc = 1000
+nmc = 500
 
 # Define the values of mm
 mm <- c(12, 20, 30, 40)
@@ -88,7 +96,7 @@ for (i in 1:length(mm)) {
   tstar <- tmax / 2
   delta <- (1-0.1)/tmax
   # Dynamically create and assign a matrix
-  matrix_name <- paste0("error_matrix_m_", m)
+  matrix_name <- paste0("error_matrix_m_", m, "_n_",n)
   assign(matrix_name, matrix(nrow = 4, ncol = nmc))
   
   for (mc in 1:nmc) {
@@ -146,11 +154,13 @@ for (i in 1:length(mm)) {
   results_list[[i]] <- temp_df
 }
 
+
+
 error_matrix_m_12
-hist(error_matrix_m_12[4, ], breaks = 30)
-hist(error_matrix_m_20[4, ], breaks = 30)
-hist(error_matrix_m_30[4, ], breaks = 30)
-hist(error_matrix_m_40[4, ], breaks = 30)
+hist(error_matrix_m_12_n_300[4, ], breaks = 30)
+hist(error_matrix_m_20_n_300[4, ], breaks = 30)
+hist(error_matrix_m_30_n_300[4, ], breaks = 30)
+hist(error_matrix_m_40_n_300[4, ], breaks = 30)
 
 
 error_matrix_m_40
