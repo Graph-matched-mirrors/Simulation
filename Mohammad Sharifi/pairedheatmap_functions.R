@@ -61,6 +61,7 @@ procrustes2 <- function(X, Y) {
 ## Get distance matrix
 getD <- function(Xlist, k=0, etype="proc") {
   m <- length(Xlist)
+  n <- length(Xlist[[1]])
   if (k==0) {
     ind <- 1:n
   } else {
