@@ -448,7 +448,7 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
     errors[i] <- linf_error(df.iso_shuffle$iso, m)
     i <- i + 1
   }
-  print(paste(q,Sys.time()))
+  print(paste(n,q,Sys.time()))
   errors
 }
 paired_error_in_shuffling <- function(nmc = 50, n = 1000, p = 0.4, q = 0.15, m = 50, delta = 0.1, tstar = 25, del = 0.1){
