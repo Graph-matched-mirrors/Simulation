@@ -107,7 +107,7 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   for(perc in del){
     D2_shuffle=getD(df[[paste0("xhat_", perc)]])
     df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
-    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
+    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10, AtlantaFlag=T)
     errors[i] <- linf_error(df.iso_shuffle$iso, m)
     i <- i + 1
   }
@@ -125,7 +125,7 @@ tstar <- 25
 delta <- 0.1
 p <- 0.4
 q <- seq(0,0.5, by = 0.05)
-d <- seq(0.05, 0.30, by = 0.05)
+d <- seq(0, 1, by = 0.05)
 n <- 300
 nmc <- 100
 final_errors <- NULL
