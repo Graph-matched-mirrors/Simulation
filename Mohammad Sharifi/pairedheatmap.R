@@ -100,7 +100,7 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
 
   D2=getD(df$xhat)
   df.mds <- doMDS(D2,doplot = FALSE)
-  df.iso <- doIso(df.mds, mdsd=10)
+  df.iso <- doIso(df.mds, mdsd=10, AtlantaFlag=T)
   errors <- NULL
   errors[1] <- linf_error(df.iso$iso, m)
   i <- 2

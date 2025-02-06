@@ -164,11 +164,14 @@ doMDS <- function(D, doplot=TRUE)
 }
 
 #apply ISOMAP on the CMDS result with chosen dimension mdsd from CMDS step defaultly it always embeds to 1 
-doIso <- function(df.mds, mdsd=2, isod=1, doplot=F)
+doIso <- function(df.mds, mdsd=2, isod=1, doplot=F, AtlantaFlag = F)
 {
   mds <- df.mds$mds
   df.iso <- NULL
   dis <- vegdist(mds[,1:mdsd,drop=F], "euclidean")
+  if(AtlantaFlag){
+    dis <- dis^2
+  }
   knn <- 1
   success <- FALSE
   while(!success) {
