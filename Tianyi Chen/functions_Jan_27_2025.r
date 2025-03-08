@@ -22,7 +22,7 @@ rdpg.sample <- function(X, rdpg_scale=FALSE) {
 
 ##ASE for a network A with embedding dimension d
 full.ase <- function(A, d, diagaug=TRUE, doptr=FALSE) {
-  #    require(irlba)
+  require(RSpectra)
   
   # doptr
   if (doptr) {
