@@ -542,6 +542,21 @@ shuffle_X <- function(X,del){
   return(random_perm %*% X)
 }
 
+optimized_shuffled_X <- function(X, del) {
+  n <- nrow(X)
+  dn <- floor(del * n)
+  
+  # Generate random permutation indices
+  perm_indices <- sample(n, dn)  # Randomly pick `dn` row indices
+  permuted_indices <- sample(perm_indices)  # Shuffle only those indices
+  
+  # Swap rows in X efficiently
+  X[perm_indices, ] <- X[permuted_indices, ]
+  
+  return(X)
+}
+
+
 true_Atlanta_dmv <- function(p,q,num_state,m,tstar,delta){
   library(expm) 
   markov_p = matrix(0, num_state, num_state)
