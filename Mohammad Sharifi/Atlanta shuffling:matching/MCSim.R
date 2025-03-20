@@ -66,12 +66,6 @@ out_dd <- foreach (mc = 1:nmc) %dopar% {
   mds_shuffle_GM_alltoone <- df.mds_shuffle_GM_alltoone$mds
   
   
-  
-  find_slope_changepoint_with_plot(mds[,1], doplot = F)
-  find_slope_changepoint_with_plot(mds_shuffle[,1], doplot = F)
-  find_slope_changepoint_with_plot(mds_shuffle_GM_pairwise[,1])
-  find_slope_changepoint_with_plot(mds_shuffle_GM_alltoone[,1])
-  
   for (dd in 1:3){
     df.iso <- doIso(df.mds$mds, mdsd=dd)$iso
     df.iso_shuffle <- doIso(df.mds_shuffle$mds, mdsd=dd)$iso
