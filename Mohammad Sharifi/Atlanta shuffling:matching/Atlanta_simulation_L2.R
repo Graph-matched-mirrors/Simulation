@@ -105,7 +105,10 @@ mds_shuffle_GM_all_to_one <- df.mds_shuffle_GM_all_to_one$mds
 
 
 
-
+find_slope_changepoint_with_plot(mds[,1])
+find_slope_changepoint_with_plot(mds_shuffle[,1])
+find_slope_changepoint_with_plot(mds_shuffle_GM_pairwise[,1])
+find_slope_changepoint_with_plot(mds_shuffle_GM_all_to_one[,1])
 
 
 
