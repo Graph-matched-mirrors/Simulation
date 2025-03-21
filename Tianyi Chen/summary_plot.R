@@ -1,14 +1,16 @@
 
 
 
+out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
 
-msehat1=Reduce('cbind', lapply(out_dd, "[[", 1)) ## this will summarize tmp1 
 
-sm_mse1=as.data.frame(matrix(0,3,4))
-sm_mse1[,2]=apply(abs(msehat1)^2, 1, mean)
-sm_mse1[,1]=apply(abs(msehat1)^2, 1, mean)-apply(abs(msehat1)^2, 1, sd)*1.96/sqrt(nmc)  
-sm_mse1[,3]=apply(abs(msehat1)^2, 1, mean)+apply(abs(msehat1)^2, 1, sd)*1.96/sqrt(nmc) 
-sm_mse1[,4]=1:3
+nmc = nrow(out_dd)
+
+sm_mse1=as.data.frame(matrix(0,4,4))
+sm_mse1[,2]=apply(abs(out_dd)^2, 2, mean)
+sm_mse1[,1]=apply(abs(out_dd)^2, 2, mean)-apply(abs(out_dd)^2, 2, sd)*1.96/sqrt(nmc)  
+sm_mse1[,3]=apply(abs(out_dd)^2, 2, mean)+apply(abs(out_dd)^2, 2, sd)*1.96/sqrt(nmc) 
+
 
 sm_mse1
 msehat2=Reduce('cbind', lapply(out_dd, "[[", 2))
