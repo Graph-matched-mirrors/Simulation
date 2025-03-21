@@ -3,6 +3,8 @@ library(igraph)
 library(iGraphMatch)
 registerDoParallel(detectCores()-1)
 library(ggrepel)
+require(irlba)
+
 
 ##generate RDPG from given latent position X
 rdpg.sample <- function(X, rdpg_scale=FALSE) {
@@ -21,9 +23,7 @@ rdpg.sample <- function(X, rdpg_scale=FALSE) {
 }
 
 ##ASE for a network A with embedding dimension d
-full.ase <- function(A, d, diagaug=TRUE, doptr=FALSE) {
-  require(irlba)
-  
+full.ase <- function(A, d, diagaug=TRUE, doptr=FALSE) {  
   # doptr
   if (doptr) {
     g <- ptr(A)
@@ -759,8 +759,8 @@ c=(.9-0.1)
 num_state = 50
 delta = c/(num_state-1)
 
-nmc = 100
-max_iter = 50
+nmc = 300
+max_iter = 100
 n = 500
 
 a <- Sys.time()
@@ -809,20 +809,50 @@ out_dd <- foreach (mc = 1:nmc) %dopar% {
   mds_shuffle_GM_alltoone <- df.mds_shuffle_GM_alltoone$mds
   mds_shuffle_GM_pairwise <- df.mds_shuffle_GM_pairwise$mds
 
-  tmp1=find_slope_changepoint_with_plot(mds[,1], doplot = F)$error
-  tmp2=find_slope_changepoint_with_plot(mds_shuffle[,1], doplot = F)$error
-  tmp3=find_slope_changepoint_with_plot(mds_shuffle_GM_alltoone[,1], doplot = F)$error
-  tmp4=find_slope_changepoint_with_plot( mds_shuffle_GM_pairwise [,1], doplot = F)$error
+  tmp1[1] = find_slope_changepoint_with_plot(mds[,1], doplot = F)$error
+  tmp2[1] = find_slope_changepoint_with_plot(mds_shuffle[,1], doplot = F)$error
+  tmp3[1] = find_slope_changepoint_with_plot(mds_shuffle_GM_alltoone[,1], doplot = F)$error
+  tmp4[1] = find_slope_changepoint_with_plot( mds_shuffle_GM_pairwise [,1], doplot = F)$error
+
+  df.mds_no_square <- doMDS(D2,doplot = F)
+  df.mds_shuffle_no_square   <- doMDS(D2_shuffle,doplot = F)
+  df.mds_shuffle_GM_alltoone_no_square <- doMDS(D2_shuffle_GM_alltoone,doplot = F)
+  df.mds_shuffle_GM_pairwise_no_square <- doMDS(D2_shuffle_GM_pairwise,doplot = F)
+  
+  d_chose = c(1,4,8)
+  for ( k in 1:3 ){
+
+    dd = d_chose[k]
+
+    df.iso <- doIso(df.mds_no_square$mds, mdsd=dd)$iso
+    df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd=dd)$iso
+    df.iso_shuffle_GM_alltoone <- doIso(df.mds_shuffle_GM_alltoone_no_square$mds, mdsd=dd)$iso
+    df.iso_shuffle_GM_pairwise <- doIso(df.mds_shuffle_GM_pairwise_no_square$mds, mdsd=dd)$iso
+    
+    tmp1[k+1]=find_slope_changepoint_with_plot(df.iso, doplot = F)$error
+    tmp2[k+1]=find_slope_changepoint_with_plot(df.iso_shuffle, doplot = F)$error
+    tmp3[k+1]=find_slope_changepoint_with_plot(df.iso_shuffle_GM_alltoone, doplot = F)$error
+    tmp4[k+1]=find_slope_changepoint_with_plot(df.iso_shuffle_GM_pairwise, doplot = F)$error
+  }
+
 
 
   list(tmp1,tmp2,tmp3,tmp4)
 
+
   #cat("Result: True 1-1 =", tmp1, ", shuffle =", tmp2, ", shuffle_GM_alltoone =", tmp3, ", shuffle_GM_pairwise =", tmp4, "\n")
 }
-print(difftime(Sys.time(), a, units = "mins"))
+print(difftime(Sys.time(), a, units = "hours"))
 
 
-timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-out_dd_df <- do.call(rbind, lapply(out_dd, function(x) unlist(x)))
-file_name <- paste0("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_", timestamp, ".csv")
-write.csv(out_dd_df, file_name, row.names = FALSE)
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M")
+
+file_name <- paste0("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_",
+          "n", n,
+          "_m", m,
+          "_p", p,
+          "_q", q,
+          "_num_state", num_state,
+          "_max_iter", max_iter,
+          "_", timestamp, ".RData")
+save(out_dd, file = file_name)

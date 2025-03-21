@@ -4,71 +4,147 @@
 out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
 
 
-nmc = nrow(out_dd)
-
-sm_mse1=as.data.frame(matrix(0,4,4))
-sm_mse1[,2]=apply(abs(out_dd)^2, 2, mean)
-sm_mse1[,1]=apply(abs(out_dd)^2, 2, mean)-apply(abs(out_dd)^2, 2, sd)*1.96/sqrt(nmc)  
-sm_mse1[,3]=apply(abs(out_dd)^2, 2, mean)+apply(abs(out_dd)^2, 2, sd)*1.96/sqrt(nmc) 
+load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
 
 
-sm_mse1
-msehat2=Reduce('cbind', lapply(out_dd, "[[", 2))
+res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
+  row <- unlist(out_dd[[i]])
+  names(row) <- c(
+    "true1", "true_iso_d1", "true_iso_d4", "true_iso_d8",
+    "shuffle1", "shuffle_iso_d1", "shuffle_iso_d4", "shuffle_iso_d8",
+    "gm_alltoone1", "gm_alltoone_iso_d1", "gm_alltoone_iso_d4", "gm_alltoone_iso_d8",
+    "gm_pairwise1", "gm_pairwise_iso_d1", "gm_pairwise_iso_d4", "gm_pairwise_iso_d8"
+  )
+  return(row)
+}))
 
-sm_mse2=as.data.frame(matrix(0,3,4))
-sm_mse2[,2]=apply(abs(msehat2)^2, 1, mean)
-sm_mse2[,1]=apply(abs(msehat2)^2, 1, mean)-apply(abs(msehat2)^2, 1, sd)*1.96/sqrt(nmc)  
-sm_mse2[,3]=apply(abs(msehat2)^2, 1, mean)+apply(abs(msehat2)^2, 1, sd)*1.96/sqrt(nmc) 
-sm_mse2[,4]=1:3
-
-sm_mse2
-
-msehat3=Reduce('cbind', lapply(out_dd, "[[", 3))
-
-sm_mse3=as.data.frame(matrix(0,3,4))
-sm_mse3[,2]=apply(abs(msehat3)^2, 1, mean)
-sm_mse3[,1]=apply(abs(msehat3)^2, 1, mean)-apply(abs(msehat3)^2, 1, sd)*1.96/sqrt(nmc)  
-sm_mse3[,3]=apply(abs(msehat3)^2, 1, mean)+apply(abs(msehat3)^2, 1, sd)*1.96/sqrt(nmc) 
-sm_mse3[,4]=1:3
-sm_mse3
-
-msehat4=Reduce('cbind', lapply(out_dd, "[[", 4))
-
-sm_mse4=as.data.frame(matrix(0,3,4))
-sm_mse4[,2]=apply(abs(msehat4)^2, 1, mean)
-sm_mse4[,1]=apply(abs(msehat4)^2, 1, mean)-apply(abs(msehat4)^2, 1, sd)*1.96/sqrt(nmc)  
-sm_mse4[,3]=apply(abs(msehat4)^2, 1, mean)+apply(abs(msehat4)^2, 1, sd)*1.96/sqrt(nmc) 
-sm_mse4[,4]=1:3
-sm_mse4
+mean(res_matrix[, 'gm_pairwise_iso_d1' ]^2)
+mean(res_matrix[, 'gm_pairwise_iso_d4' ]^2)
+mean(res_matrix[, 'gm_pairwise_iso_d8' ]^2)
 
 
-# Combine the data frames and add a new column 'type' to distinguish them
-sm_mse1$type <- "True 1-1"
-sm_mse2$type <- "shuffled"
-sm_mse3$type <- "shuffled then GM (all to one)"
-sm_mse4$type <- "shuffled then GM (pairwise)"
-sm_mse_all <- rbind(sm_mse1, sm_mse2, sm_mse3, sm_mse4)
+m <- 20  # ensure m is defined
+x_ticks <- seq(-0.5, 0.5, by = 1/m)
 
-# Plot
+hist(abs(res_matrix[, 'gm_pairwise_iso_d1']),
+  breaks = 50,
+  xlim = c(0, 0.5),
+  xaxt = "n",
+  main = "Histogram of gm_pairwise_iso_d1",
+  xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
 
-library(ggplot2)
-plottt <- ggplot(sm_mse_all, aes(x=V4, y=V2, color=type, linetype=type)) + 
-  geom_line() +
-  geom_errorbar(aes(ymin=V1, ymax=V3)) +
-  scale_x_continuous(breaks = 1:3) +
-  labs(y='MSE', x='MDS embedding dim d for the (d -> 1)-iso-mirror', color='Type', linetype='Type') +
-  theme(axis.text=element_text(size=25), axis.title=element_text(size=25, face="bold"))
+hist(abs(res_matrix[, 'gm_pairwise_iso_d4']),
+  breaks = 50,
+  xlim = c(0, 0.5),
+  xaxt = "n",
+  main = "Histogram of gm_pairwise_iso_d4",
+  xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
 
 
-plottt <- plottt + labs(title = paste("p =", p, "q =", q,"m=",m, "n =", n, "nmc =", nmc, 'max_iter=', max_iter))
-plottt <- plottt + theme(
-  axis.text = element_text(size = 25),
-  axis.title = element_text(size = 25, face = "bold"),
-  legend.text = element_text(size = 25),
-  legend.title = element_text(size = 25, face = "bold"),
-  plot.title = element_text(size = 20, face = "bold") 
+hist((res_matrix[, 'gm_pairwise_iso_d4']),
+  breaks = 50,
+  xlim = c(-0.5, 0.5),
+  xaxt = "n",
+  main = "Histogram of gm_pairwise_iso_d4",
+  xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
+
+hist(abs(res_matrix[, 'shuffle1']),
+  breaks = 50,
+  xlim = c(0, 0.5),
+  xaxt = "n",
+  main = "Histogram of gm_pairwise_iso_d8",
+  xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
+
+# Number of simulations used in the analysis
+nmc <- length(out_dd)
+
+# Calculate summary statistics for each column in res_matrix
+col_means <- apply(abs(res_matrix)^2, 2, mean)
+col_sds   <- apply(abs(res_matrix)^2, 2, sd)
+
+# Organize the summary into a data frame
+summary_df <- data.frame(
+  metric = names(col_means),
+  mean   = col_means,
+  sd     = col_sds
 )
 
+# Compute the lower and upper bounds of the 95% Confidence Interval
+summary_df$lower_bound <- summary_df$mean - 1.96 * summary_df$sd / sqrt(nmc)
+summary_df$upper_bound <- summary_df$mean + 1.96 * summary_df$sd / sqrt(nmc)
 
 
-print(plottt)
+library(dplyr)
+library(ggplot2)
+
+# Create two new variables: 'type' and 'iso' from the metric names
+summary_df <- summary_df %>%
+  mutate(type = case_when(
+           grepl("^true", metric)       ~ "True",
+           grepl("^shuffle", metric)      ~ "Shuffled",
+           grepl("^gm_alltoone", metric)  ~ "GM All-to-one",
+           grepl("^gm_pairwise", metric)  ~ "GM consecutive pair"
+         ),
+         iso = case_when(
+           grepl("iso_d1", metric) ~ "iso_d1+D",
+           grepl("iso_d4", metric) ~ "iso_d4+D",
+           grepl("iso_d8", metric) ~ "iso_d8+D",
+           TRUE                  ~ "MDS1+D^2"   # Default case: plain "1"
+         ))
+
+summary_df
+summary_df$iso <- factor(summary_df$iso, levels = c("MDS1+D^2", "iso_d1+D", "iso_d4+D", "iso_d8+D"))
+
+m=20
+support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
+chance_level = sum(support^2/length(support))
+# Plot: x-axis is the iso label, and different colors indicate different types
+plot_summary <- ggplot(summary_df, aes(x = iso, y = mean, group = type, color = type)) +
+  geom_point(size = 4) +
+  geom_line(linetype = "dashed", linewidth = 1) +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
+  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
+  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
+  labs(x = "MDS or ISO+MDS", 
+       y = "Mean Squared Error", 
+       title = paste("n=500 m=20 p=0.4 q=0.2 num_state=50 max_iter=100"),
+       color = "Type") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 14),
+        axis.title.x = element_text(size = 18, face = "bold"),
+        axis.title.y = element_text(size = 18, face = "bold"),
+        legend.text = element_text(size = 16),
+        legend.title = element_text(size = 18),
+        plot.title = element_text(size = 18, face = "bold"))
+
+print(plot_summary)
+
+
+
+
+# Parameter string
+param_str <- "n500_m20_p0.4_q0.2_num_state50_max_iter100"
+
+plot_summary <- ggplot(summary_df, aes(x = metric, y = mean, group = 1)) +
+  geom_point(size = 4) +
+  geom_line(linetype = "dashed", linewidth = 1) +
+  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
+  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
+  labs(x = "Metric (Ordered: True, Shuffled, GM All-to-one, GM Pairwise)",
+       y = "Mean Square Error",
+       title = paste("Summary of Simulation Results for", param_str)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 14),
+        axis.title = element_text(size = 16, face = "bold"),
+        plot.title = element_text(size = 18, face = "bold"))
+
+print(plot_summary)
+
+
+
