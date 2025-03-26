@@ -1,11 +1,23 @@
+#out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
 
 
+#load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
 
-out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
+result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
+#result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
+
+# Extract simulation parameters from result_name
+pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_num_state(\\d+)_max_iter(\\d+)"
+matches <- regmatches(result_name, regexec(pattern, result_name))[[1]]
+n         <- as.numeric(matches[2])
+m         <- as.numeric(matches[3])
+p         <- as.numeric(matches[4])
+q         <- as.numeric(matches[5])
+num_state <- as.numeric(matches[6])
+max_iter  <- as.numeric(matches[7])
 
 
-load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
-
+load(result_name)
 
 res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
   row <- unlist(out_dd[[i]])
@@ -18,12 +30,12 @@ res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
   return(row)
 }))
 
+
 mean(res_matrix[, 'gm_pairwise_iso_d1' ]^2)
 mean(res_matrix[, 'gm_pairwise_iso_d4' ]^2)
 mean(res_matrix[, 'gm_pairwise_iso_d8' ]^2)
 
 
-m <- 20  # ensure m is defined
 x_ticks <- seq(-0.5, 0.5, by = 1/m)
 
 hist(abs(res_matrix[, 'gm_pairwise_iso_d1']),
@@ -96,12 +108,13 @@ summary_df <- summary_df %>%
            TRUE                  ~ "MDS1+D^2"   # Default case: plain "1"
          ))
 
+
 summary_df
 summary_df$iso <- factor(summary_df$iso, levels = c("MDS1+D^2", "iso_d1+D", "iso_d4+D", "iso_d8+D"))
 
-m=20
 support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
 chance_level = sum(support^2/length(support))
+chance_level
 # Plot: x-axis is the iso label, and different colors indicate different types
 plot_summary <- ggplot(summary_df, aes(x = iso, y = mean, group = type, color = type)) +
   geom_point(size = 4) +
@@ -111,7 +124,7 @@ plot_summary <- ggplot(summary_df, aes(x = iso, y = mean, group = type, color = 
   geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
   labs(x = "MDS or ISO+MDS", 
        y = "Mean Squared Error", 
-       title = paste("n=500 m=20 p=0.4 q=0.2 num_state=50 max_iter=100"),
+       title = paste("n=",n, 'm=',m, 'p=',p, 'q=',q, 'num_state=',num_state, 'max_iter=',max_iter),
        color = "Type") +
   theme_minimal() +
   theme(axis.text = element_text(size = 14),
@@ -119,29 +132,6 @@ plot_summary <- ggplot(summary_df, aes(x = iso, y = mean, group = type, color = 
         axis.title.y = element_text(size = 18, face = "bold"),
         legend.text = element_text(size = 16),
         legend.title = element_text(size = 18),
-        plot.title = element_text(size = 18, face = "bold"))
-
-print(plot_summary)
-
-
-
-
-# Parameter string
-param_str <- "n500_m20_p0.4_q0.2_num_state50_max_iter100"
-
-plot_summary <- ggplot(summary_df, aes(x = metric, y = mean, group = 1)) +
-  geom_point(size = 4) +
-  geom_line(linetype = "dashed", linewidth = 1) +
-  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
-  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
-  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
-  labs(x = "Metric (Ordered: True, Shuffled, GM All-to-one, GM Pairwise)",
-       y = "Mean Square Error",
-       title = paste("Summary of Simulation Results for", param_str)) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
-        axis.text.y = element_text(size = 14),
-        axis.title = element_text(size = 16, face = "bold"),
         plot.title = element_text(size = 18, face = "bold"))
 
 print(plot_summary)

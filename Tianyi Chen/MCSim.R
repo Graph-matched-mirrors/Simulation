@@ -1,7 +1,7 @@
 pacman::p_load(segmented, igraph, RSpectra, locfit, tidyverse, doParallel, broom, vegan, Matrix)
 library(igraph)
 library(iGraphMatch)
-registerDoParallel(detectCores()-1)
+registerDoParallel(min(50, detectCores()/2))
 library(ggrepel)
 require(irlba)
 
@@ -761,7 +761,7 @@ delta = c/(num_state-1)
 
 nmc = 300
 max_iter = 100
-n = 500
+n = 800
 
 a <- Sys.time()
 out_dd <- foreach (mc = 1:nmc) %dopar% {
