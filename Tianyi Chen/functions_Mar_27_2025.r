@@ -22,7 +22,7 @@ rdpg.sample <- function(X, rdpg_scale=FALSE) {
 
 ##ASE for a network A with embedding dimension d
 full.ase <- function(A, d, diagaug=TRUE, doptr=FALSE) {
-  require(RSpectra)
+  require(irlba)
   
   # doptr
   if (doptr) {
@@ -37,9 +37,14 @@ full.ase <- function(A, d, diagaug=TRUE, doptr=FALSE) {
     diag(A) <- rowSums(A) / (nrow(A)-1)
   }
   
-  A.svd <- svds(A,k=d)
-  Xhat <- A.svd$u %*% diag(sqrt(A.svd$d))
-  Xhat.R <- NULL
+  if(d==1){
+    A.svd <- irlba(A,d)
+    Xhat <- A.svd$u * sqrt(A.svd$d)
+  } else{
+    A.svd <- irlba(A,d)
+    Xhat <- A.svd$u %*% diag(sqrt(A.svd$d))}
+  
+  Xhat.R <- NULL 
   
   if (!isSymmetric(A)) {
     Xhat.R <- A.svd$v %*% diag(sqrt(A.svd$d))
@@ -47,7 +52,6 @@ full.ase <- function(A, d, diagaug=TRUE, doptr=FALSE) {
   
   return(list(eval=A.svd$d, Xhat=Matrix(Xhat), Xhat.R=Xhat.R))
 }
-
 
 ## del is the set of shuffle percetage you want
 doSim_London <- function(n=300, tmax=40, delta=0.1, p=0.4, q=0.9, tstar=20 , del = c(1))
@@ -73,7 +77,7 @@ doSim_London <- function(n=300, tmax=40, delta=0.1, p=0.4, q=0.9, tstar=20 , del
   df <- tibble(time=1:tmax) %>%
     mutate(Xt = map(time, function(x) matrix(Xt[,x],n,1)  )) %>%
     mutate(g = map(Xt, ~rdpg.sample(.))) %>%
-    mutate( avg_edges = map( g ,  ~sum(as.matrix(.))    )   ) %>%
+    mutate(avg_edges = map( g ,  ~sum(as.matrix(.))    )   ) %>%
     mutate(xhat = map(g, function(x) full.ase(x,2)$Xhat[,1,drop=F]))
   
   for(perc in del){
@@ -206,20 +210,6 @@ true_W1_square_London = function(tt,t0,p,q){
   return(D2)
 }
 
-
-graph_mathing <- function(stand,mess,max_it){
-  G1=as.matrix( stand )
-  G2=as.matrix( mess )
-  
-  gm=gm(A=stand,B=mess,start = "rds", max_iter = max_it)
-  perm=diag(length(gm[,2]))[gm[,2],]
-  
-  new_graph=as.matrix(perm%*%as.matrix( mess )%*% t(perm))
-  
-  #print(c("Pre_Frob=",sqrt(sum((G1-G2)^2)),"Post_Frob=", sqrt(sum((G1-new_graph)^2)) ) )
-  
-  return( graph_from_adjacency_matrix(new_graph,mode = 'undirected') )
-}
 
 
 #graph_mathing(df$g[[2]],df$g[[3]])
@@ -471,8 +461,8 @@ find_slope_changepoint_with_plot <- function(y, doplot = TRUE) {
     lines(x, fitted_y, col = "red", lwd = 2)
     abline(v = best_cp, col = "red", lwd = 2, lty = 2)
     abline(v = tstar, col = "black", lwd = 2, lty = 2)
-    legend("topleft", legend = c("Data", "Fitted Line l2", "Estimated_CP l2"),
-           col = c("black", "red", "red"), pch = c(16, NA, NA), lty = c(NA, 1, 2), lwd = 2 , cex =0.5)
+    legend("topleft", legend = c("Data", "Fitted Line l2", "Estimated_CP l2", "tstar"),
+           col = c("black", "red", "red","black"), pch = c(16, NA, NA, NA), lty = c(NA, 1, 2, 2), lwd = 2 , cex = 1)
   }
   
   # Return results
@@ -730,5 +720,38 @@ getElbows <- function(dat, n = 3, threshold = FALSE, plot = TRUE, main="") {
   }
   
   return(q)
+}
+
+shuffle_graph <- function(A){
+  G=as.matrix(A)
+  permu_vec=sample(1:n)
+  random_perm=diag(n)[permu_vec,]
+  permu_G=as.matrix(random_perm%*%G%*%t(random_perm))
+  G_graph=graph_from_adjacency_matrix(permu_G,mode ="undirected")
+  
+  return(G_graph)
+}
+
+optimized_shuffle_graph <- function(A){
+  G=as.matrix(A)
+  permu_vec=sample(1:n)
+  permu_G <- G[permu_vec, permu_vec]  # directly permute rows and columns
+  G_graph=graph_from_adjacency_matrix(permu_G,mode ="undirected")
+  return(G_graph)
+}
+
+
+graph_mathing <- function(stand,mess,max_it){
+  G1=as.matrix( stand )
+  G2=as.matrix( mess )
+  
+  gm=gm(A=stand,B=mess,start = "rds", max_iter = max_it)
+  perm=diag(length(gm[,2]))[gm[,2],]
+  
+  new_graph=as.matrix(perm%*%as.matrix( mess )%*% t(perm))
+  
+  #print(c("Pre_Frob=",sqrt(sum((G1-G2)^2)),"Post_Frob=", sqrt(sum((G1-new_graph)^2)) ) )
+  
+  return( graph_from_adjacency_matrix(new_graph,mode = 'undirected') )
 }
 
