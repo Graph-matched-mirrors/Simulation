@@ -3,8 +3,10 @@
 
 #load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
 
-result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
+#result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
 #result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
+
+result_name ="/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn500_m20_p0.4_q0.2_max_iter100_20250327_1729.RData"
 
 # Extract simulation parameters from result_name
 pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_num_state(\\d+)_max_iter(\\d+)"
