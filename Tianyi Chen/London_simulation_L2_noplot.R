@@ -1,7 +1,7 @@
 set.seed(2)
 n = 200
-p <- 0.3
-q <- 0.4
+p <- 0.4
+q <- 0.3
 nmc = 500
 
 # Define the values of mm
@@ -116,7 +116,33 @@ for (i in 1:length(mm)) {
 
 
 
+summary_df_l2 <- do.call(rbind, c(get(list_name_l2)))
+
 summary_df_both <- do.call(rbind, c(get(list_name_l2), get(list_name)))
+summary_df_both$localizer <- ifelse(grepl("_l2", summary_df_both$error_type), "L2", "Linf")
+summary_df_both$metric <- gsub("error_", "", gsub("_l2", "", summary_df_both$error_type))
+
+
+summary_df_both
+
+# Update your ggplot call to include linetype mapping
+plottt1 <- ggplot(summary_df_both, aes(x = m, y = Mean_MSE, color = metric, linetype = localizer)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI), width = 0.5) +
+  scale_x_continuous(breaks = mm) +
+  labs(y = 'MSE', x = 'm', title = paste('L2-localizer','n =', n, 
+                                         'nmc =', nmc, 
+                                         'p =', p, 
+                                         'q =', q)) +
+  theme(
+    axis.text = element_text(size = 15),
+    axis.title = element_text(size = 15, face = "bold")
+  )
+
+# Print the plot
+print(plottt1)
+
+
 plottt1 <- ggplot(summary_df_both , aes(x = m, y = Mean_MSE, color = error_type)) +
   geom_line() +
   geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI), width = 0.5) +
@@ -134,4 +160,46 @@ plottt1 <- ggplot(summary_df_both , aes(x = m, y = Mean_MSE, color = error_type)
 print(plottt1)
 
 
+plottt2 <- ggplot(summary_df_l2 , aes(x = m, y = Mean_MSE, color = error_type)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI), width = 0.5) +
+  scale_x_continuous(breaks = mm) +
+  labs(y = 'MSE', x = 'm', title =  paste('L2-localizer','n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q)) +
+  theme(
+    axis.text = element_text(size = 15),
+    axis.title = element_text(size = 15, face = "bold")
+  )
 
+# Print the plot
+print(plottt2)
+
+summary_df_l2 = summary_df_l2[-c(3,7,11,15),]
+
+plottt2 <- ggplot(summary_df_l2 , aes(x = m, y = Mean_MSE, color = error_type)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = Lower_CI, ymax = Upper_CI), width = 0.5) +
+  scale_x_continuous(breaks = mm) +
+  labs(y = 'MSE', x = 'm', title =  paste('L2-localizer','n =', n, 
+                                          'nmc =', nmc, 
+                                          'p =', p, 
+                                          'q =', q)) +
+  theme(
+    axis.text = element_text(size = 15),
+    axis.title = element_text(size = 15, face = "bold")
+  )
+
+# Print the plot
+print(plottt2)
+
+#c(error_avg_degree_l2, error_W1_l2, error_W2_l2, error_dMV_l2)
+hist(temp_matrix_l2[2,]^2,breaks = 50)
+mean(temp_matrix_l2[2,]^2)
+
+table(temp_matrix_l2[2,]^2)
+
+hist(temp_matrix_l2[4,]^2,breaks = 50)
+mean(temp_matrix_l2[4,]^2)
+table(temp_matrix_l2[4,]^2)

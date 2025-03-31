@@ -1,4 +1,4 @@
-pacman::p_load(segmented, igraph, RSpectra, locfit, tidyverse, doParallel, broom, vegan, Matrix)
+pacman::p_load(segmented, igraph, irlba ,RSpectra, locfit, tidyverse, doParallel, broom, vegan, Matrix)
 library(igraph)
 library(iGraphMatch)
 registerDoParallel(detectCores()-1)
@@ -139,7 +139,6 @@ true_London_dMV = function(tt,t0,p,q){
 
 
 getD_W1 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -150,6 +149,9 @@ getD_W1 <- function(Xlist) {
     
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
+    
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
     
     D <- mean( abs( sort(Xhatj) - sort(Xhati) ) )
     tibble(i=i, j=j, D=D)
@@ -162,7 +164,6 @@ getD_W1 <- function(Xlist) {
 
 
 getD_W2 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -173,6 +174,9 @@ getD_W2 <- function(Xlist) {
     
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
+    
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
     
     D <- sqrt(mean( ( sort(Xhatj) - sort(Xhati) )^2 ))
     tibble(i=i, j=j, D=D)

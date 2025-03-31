@@ -137,53 +137,6 @@ true_London_dMV = function(tt,t0,p,q){
 }
 
 
-
-getD_W1 <- function(Xlist) {
-  Xlist= df$Xt
-  m <- length(Xlist)
-  ind <- 1:n
-  
-  comb <- combn(m,2)
-  Dout <- foreach (k = 1:ncol(comb), .combine='rbind') %dopar% {
-    i <- comb[1,k]
-    j <- comb[2,k]
-    
-    Xhati <- Xlist[[i]][ind,] 
-    Xhatj <- Xlist[[j]][ind,]
-    
-    D <- mean( abs( sort(Xhatj) - sort(Xhati) ) )
-    tibble(i=i, j=j, D=D)
-  }
-  D2 <- matrix(0,m,m)
-  D2[t(comb)] <- Dout$D
-  D2 <- (D2 + t(D2)) / 1
-  D2
-}
-
-
-getD_W2 <- function(Xlist) {
-  Xlist= df$Xt
-  m <- length(Xlist)
-  ind <- 1:n
-  
-  comb <- combn(m,2)
-  Dout <- foreach (k = 1:ncol(comb), .combine='rbind') %dopar% {
-    i <- comb[1,k]
-    j <- comb[2,k]
-    
-    Xhati <- Xlist[[i]][ind,] 
-    Xhatj <- Xlist[[j]][ind,]
-    
-    D <- sqrt(mean( ( sort(Xhatj) - sort(Xhati) )^2 ))
-    tibble(i=i, j=j, D=D)
-  }
-  D2 <- matrix(0,m,m)
-  D2[t(comb)] <- Dout$D
-  D2 <- (D2 + t(D2)) / 1
-  D2
-}
-
-
 true_W1_square_London = function(tt,t0,p,q){
   D=matrix(0,tt,tt)
   for (i in 1:t0) {

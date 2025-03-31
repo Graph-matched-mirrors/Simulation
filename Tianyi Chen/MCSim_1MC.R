@@ -137,9 +137,7 @@ true_London_dMV = function(tt,t0,p,q){
 }
 
 
-
 getD_W1 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -162,7 +160,6 @@ getD_W1 <- function(Xlist) {
 
 
 getD_W2 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -745,6 +742,13 @@ graph_mathing <- function(stand,mess,max_it){
   
   return( graph_from_adjacency_matrix(new_graph,mode = 'undirected') )
 }
+optimized_shuffle_graph <- function(A){
+  G=as.matrix(A)
+  permu_vec=sample(1:n)
+  permu_G <- G[permu_vec, permu_vec]  # directly permute rows and columns
+  G_graph=graph_from_adjacency_matrix(permu_G,mode ="undirected")
+  return(G_graph)
+}
 
 
 set.seed(2)
@@ -761,10 +765,9 @@ delta = c/(num_state-1)
 
 nmc = 1
 max_iter = 100
-n = 300
+n = 200
 
-a <- Sys.time()
-for(mc in 1:nmc){
+
   
   tmp1 <- tmp2 <- tmp3 <- tmp4 <- NULL
   
@@ -796,50 +799,15 @@ for(mc in 1:nmc){
   
   
   
-  norm(df$shuffle_g[[1]][] -  df$shuffle_g[[2]][],'F')
-  df$shuffle_g_GM_alltoone[[1]]
-  df$shuffle_g_GM_pairwise[[1]]
-  
- 
-  df$shuffle_g_GM_alltoone[[2]]
-  df$shuffle_g_GM_pairwise[[2]]
-  
-  norm(df$shuffle_g_GM_alltoone[[1]][] -  df$shuffle_g_GM_alltoone[[2]][],'F')
-  
-  norm(df$shuffle_g_GM_alltoone[[1]][] -  df$shuffle_g_GM_alltoone[[3]][],'F')
-  norm(df$shuffle_g_GM_alltoone[[1]][] -  df$shuffle_g_GM_alltoone[[4]][],'F')
-  
-  norm(df$shuffle_g_GM_alltoone[[2]][] -  df$shuffle_g_GM_alltoone[[3]][],'F')
-  
-  
-  
-  norm(df$shuffle_g_GM_pairwise[[1]][] -  df$shuffle_g_GM_pairwise[[2]][],'F')
-  
-  norm(df$shuffle_g_GM_pairwise[[1]][] -  df$shuffle_g_GM_pairwise[[4]][],'F')
-  
-  norm(df$shuffle_g_GM_pairwise[[2]][] -  df$shuffle_g_GM_pairwise[[3]][],'F')
-  
-  norm(df$shuffle_g_GM_pairwise[[3]][] -  df$shuffle_g_GM_pairwise[[4]][],'F')
-  
-  
-  
-  D2_xt <- getD(df$xt) 
-  
-  
-  
-  
   D2 <- getD(df$Xhat) 
   D2_shuffle <- getD(df$Xhat_shuffle)
   D2_shuffle_GM_alltoone <- getD(df$Xhat_shuffle_GM_alltoone)
   D2_shuffle_GM_pairwise <- getD(df$Xhat_shuffle_GM_pairwise) 
   
   
-  diff((D2_shuffle_GM_pairwise^2)[1,])
-  
+
   
   df.mds <- doMDS(D2^2,doplot = T)
-  df.mds_xt <- doMDS(D2_xt^2,doplot = T)
-  
   df.mds_shuffle <- doMDS(D2_shuffle^2,doplot = T)
   df.mds_shuffle_GM_alltoone <- doMDS(D2_shuffle_GM_alltoone^2,doplot = T)
   df.mds_shuffle_GM_pairwise <- doMDS(D2_shuffle_GM_pairwise^2,doplot = T)
@@ -862,7 +830,7 @@ for(mc in 1:nmc){
   d_chose = c(1,4,8)
   for ( k in 1:3 ){
 
-    dd = d_chose[k]
+    dd = 4
 
     df.iso <- doIso(df.mds_no_square$mds, mdsd=dd)$iso
     df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd=dd)$iso
@@ -877,11 +845,8 @@ for(mc in 1:nmc){
 
 
 
-  list(tmp1,tmp2,tmp3,tmp4)
 
 
-  #cat("Result: True 1-1 =", tmp1, ", shuffle =", tmp2, ", shuffle_GM_alltoone =", tmp3, ", shuffle_GM_pairwise =", tmp4, "\n")
-}
 
 
 
@@ -892,7 +857,7 @@ OFV=OFV_alltoone = OFV_pairwise = matrix(0,m,m)
 for (i in 1:m) {
   for (j in 1:m) {
     OFV[i,j] = norm(df$shuffle_g[[i]][] -  df$shuffle_g[[j]][],'F')
-    OFV_alltoone[i,j]  =   norm(df$shuffle_g_GM_alltoone[[i]][] -  df$shuffle_g_GM_alltoone[[j]][],'F')
+    OFV_alltoone[i,j]  =  norm(df$shuffle_g_GM_alltoone[[i]][] -  df$shuffle_g_GM_alltoone[[j]][],'F')
     OFV_pairwise[i,j]  =  norm(df$shuffle_g_GM_pairwise[[i]][] -  df$shuffle_g_GM_pairwise[[j]][],'F')
 
     
@@ -900,8 +865,6 @@ for (i in 1:m) {
   
 }
 
-# Install and load the gplots package if not already installed
-if (!require(pheatmap)) install.packages("pheatmap")
 library(pheatmap)
 
 pheatmap(OFV,
@@ -918,6 +881,10 @@ pheatmap(OFV_alltoone,
          display_numbers = TRUE,    # Show the value in each cell
          color = heat.colors(256),
          main = "Heatmap of OFV_alltoone with Values")
+
+doMDS(OFV_alltoone)
+
+
 
 pheatmap(OFV_pairwise,
          cluster_rows = FALSE,
