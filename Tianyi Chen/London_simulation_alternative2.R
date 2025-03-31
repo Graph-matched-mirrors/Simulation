@@ -18,10 +18,11 @@ error_types <- c("error_avg_degree", "error_W1", "error_W2", "error_dMV")
 for (i in 1:length(mm)) {
   m <- mm[i]
   
-  # Temporary matrix to store results for current m
   error_matrix <- matrix(nrow = 4, ncol = nmc)
   
   for (mc in 1:nmc) {
+    delta = (1-0.1)/tmax
+
     df <- doSim_London(n, tmax, delta, p, q, tstar)
     
     # Compute square root of avg_edges
