@@ -174,6 +174,9 @@ getD_W2 <- function(Xlist) {
     
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
+
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
     
     proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
     Xhati <- Xhati %*% proc$W

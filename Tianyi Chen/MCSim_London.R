@@ -140,7 +140,6 @@ true_London_dMV = function(tt,t0,p,q){
 
 
 getD_W1 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -151,6 +150,9 @@ getD_W1 <- function(Xlist) {
     
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
+
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
     
     D <- mean( abs( sort(Xhatj) - sort(Xhati) ) )
     tibble(i=i, j=j, D=D)
@@ -163,7 +165,6 @@ getD_W1 <- function(Xlist) {
 
 
 getD_W2 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -175,6 +176,9 @@ getD_W2 <- function(Xlist) {
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
     
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
+
     D <- sqrt(mean( ( sort(Xhatj) - sort(Xhati) )^2 ))
     tibble(i=i, j=j, D=D)
   }
@@ -211,9 +215,6 @@ true_W1_square_London = function(tt,t0,p,q){
   return(D2)
 }
 
-
-
-#graph_mathing(df$g[[2]],df$g[[3]])
 
 ## Procruste/i.e gain W in the estimated d_MV distance. Note in our case latent positions are 1d so this is trivial with w=1or -1
 procrustes2 <- function(X, Y) {
@@ -758,23 +759,23 @@ graph_mathing <- function(stand,mess,max_it){
 
 
 
-numCores <- max(1, floor(parallel::detectCores() / 3))
+numCores <- floor(min(50, detectCores()/2))
 cl <- makeCluster(numCores)
-clusterExport(cl, list = ls())
+clusterExport(cl, varlist = ls())
 registerDoSNOW(cl)
 
 
 
 set.seed(2)
-n = 500
-p <- 0.4
-q <- 0.2
-nmc = 100
+n = 200
+p <- 0.3
+q <- 0.4
+nmc = 500
 tmax <- m <- 20
 tstar <- tmax / 2
 delta <- (1-0.1)/tmax
 
-max_iter = 5
+max_iter = 100
 
 pb <- txtProgressBar(max = nmc, style = 3)
 opts <- list(progress = function(n) {
@@ -840,29 +841,18 @@ out_dd <- foreach(mc = 1:nmc,
     tmp3[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_alltoone, doplot = F)$error
     tmp4[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_pairwise, doplot = F)$error
   }
+
+  example_df <- if (mc %% 100 == 0) df else NULL
   
-  list(tmp1, tmp2, tmp3, tmp4, tmp_W1, tmp_avg_edges)
+  list(tmp1 = tmp1, tmp2 = tmp2, tmp3 = tmp3, tmp4 = tmp4, 
+       tmp_W1 = tmp_W1, tmp_avg_edges = tmp_avg_edges,
+       example_df = example_df)
 }
 
 close(pb)
 stopCluster(cl)
 
 print(difftime(Sys.time(), a, units = "hours"))
-
-timestamp <- format(Sys.time(), "%Y%m%d_%H%M")
-file_name <- paste0("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_",
-                    "n", n,
-                    "_m", m,
-                    "_p", p,
-                    "_q", q,
-                    "_num_state", num_state,
-                    "_max_iter", max_iter,
-                    "_", timestamp, ".RData")
-save(out_dd, file = file_name)
-
-
-
-out_dd
 
 
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M")
@@ -872,7 +862,6 @@ file_name <- paste0("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Lond
                     "_m", m,
                     "_p", p,
                     "_q", q,
-                    "_num_state", num_state,
                     "_max_iter", max_iter,
                     "_", timestamp, ".RData")
 save(out_dd, file = file_name)

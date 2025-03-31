@@ -1,0 +1,122 @@
+#out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
+
+
+#load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
+
+#result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
+#result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
+
+result_name ="/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn200_m20_p0.4_q0.3_max_iter100_20250328_0038.RData"
+
+# Extract simulation parameters from result_name
+pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_max_iter(\\d+)"
+matches <- regmatches(result_name, regexec(pattern, result_name))[[1]]
+matches
+
+n         <- as.numeric(matches[2])
+m         <- as.numeric(matches[3])
+p         <- as.numeric(matches[4])
+q         <- as.numeric(matches[5])
+max_iter  <- as.numeric(matches[6])
+
+
+
+load(result_name)
+
+
+
+out_dd
+
+# Create a summary data frame from out_dd (ignoring the example_df)
+summary_df <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
+  out <- out_dd[[i]]
+  data.frame(
+    mc = i,
+    true_mds1_iso1 = out$tmp1[1],
+    true_mds2_iso1 = out$tmp1[2],
+    true_mds3_iso1 = out$tmp1[3],
+    shuffled_mds1_iso1 = out$tmp2[1],
+    shuffled_mds2_iso1 = out$tmp2[2],
+    shuffled_mds3_iso1 = out$tmp2[3],
+    gm_alltoone_mds1_iso1 = out$tmp3[1],
+    gm_alltoone_mds2_iso1 = out$tmp3[2],
+    gm_alltoone_mds3_iso1 = out$tmp3[3],
+    gm_pairwise_mds1_iso1 = out$tmp4[1],
+    gm_pairwise_mds2_iso1 = out$tmp4[2],
+    gm_pairwise_mds3_iso1 = out$tmp4[3],
+    tmp_W1 = out$tmp_W1,
+    tmp_avg_edges = out$tmp_avg_edges
+  )
+}))
+
+summary_df$true_mds1_iso1
+summary_df$gm_alltoone_mds1_iso1
+summary_df$gm_pairwise_mds1_iso1
+summary_df$tmp_avg_edges
+summary_df$tmp_W1
+
+num_df <- summary_df[, !names(summary_df) %in% "mc"]
+
+squared_df <- num_df^2
+
+nmc <- nrow(summary_df)
+
+# Compute the mean and standard deviation for each metric (each column)
+col_means <- colMeans(squared_df)
+col_sds   <- apply(squared_df, 2, sd)
+
+# Construct the 95% Confidence Interval for each metric
+lower_bound <- col_means - 1.96 * col_sds / sqrt(nmc)
+upper_bound <- col_means + 1.96 * col_sds / sqrt(nmc)
+
+# Create a new summary data frame with the metric names as row names
+ci_df <- data.frame(lower_bound = lower_bound, mean = col_means, upper_bound = upper_bound)
+ci_df
+
+
+
+out_dd[[100]]$tmp_W1
+
+df = out_dd[[100]]$example_df
+
+tstar = m/2
+D2 <- getD(df$xhat)
+sqrt_edges <- sqrt(unlist(df$avg_edges))
+Dhat_W1 <- getD_W1(df$Xhat_shuffle)
+  
+tmp_avg_edges <- find_slope_changepoint_with_plot(sqrt_edges, doplot = T)$error
+  
+D2_shuffle <- getD(df$Xhat_shuffle)
+  D2_shuffle_GM_alltoone <- getD(df$Xhat_shuffle_GM_alltoone)
+  D2_shuffle_GM_pairwise <- getD(df$Xhat_shuffle_GM_pairwise)
+  
+  df.mds_W1 <- doMDS(Dhat_W1, doplot = F)
+  df.mds_no_square <- doMDS(D2, doplot = T)
+  df.mds_shuffle_no_square <- doMDS(D2_shuffle, doplot = F)
+  df.mds_shuffle_GM_alltoone_no_square <- doMDS(D2_shuffle_GM_alltoone, doplot = F)
+  df.mds_shuffle_GM_pairwise_no_square <- doMDS(D2_shuffle_GM_pairwise, doplot = F)
+
+find_slope_changepoint_with_plot(df.mds_W1$mds[,1], doplot = T)$error
+  
+  d_chose = c(1, 2, 3)
+  for (k in 1:3) {
+    
+    dd = d_chose[k]
+    
+    df.iso <- doIso(df.mds_no_square$mds, mdsd = dd)$iso
+    df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd = dd)$iso
+    df.iso_shuffle_GM_alltoone <- doIso(df.mds_shuffle_GM_alltoone_no_square$mds, mdsd = dd)$iso
+    df.iso_shuffle_GM_pairwise <- doIso(df.mds_shuffle_GM_pairwise_no_square$mds, mdsd = dd)$iso
+    
+    tmp1[k] <- find_slope_changepoint_with_plot(df.iso, doplot = F)$error
+    tmp2[k] <- find_slope_changepoint_with_plot(df.iso_shuffle, doplot = F)$error
+    tmp3[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_alltoone, doplot = F)$error
+    tmp4[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_pairwise, doplot = F)$error
+  }
+
+      df.iso <- doIso(df.mds_no_square$mds, mdsd = 1)$iso
+    df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd = dd)$iso
+    df.iso_shuffle_GM_alltoone <- doIso(df.mds_shuffle_GM_alltoone_no_square$mds, mdsd = dd)$iso
+    df.iso_shuffle_GM_pairwise <- doIso(df.mds_shuffle_GM_pairwise_no_square$mds, mdsd = dd)$iso
+    
+find_slope_changepoint_with_plot(df.iso, doplot = T)$error
