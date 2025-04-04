@@ -6,7 +6,12 @@ library(ggplot2)
 #result_name ="/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn200_m20_p0.4_q0.3_max_iter100_20250328_0038.RData"
 #result_name ="/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn200_m20_p0.4_q0.2_max_iter100_20250328_0005.RData"
 #result_name = '/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn200_m20_p0.3_q0.4_max_iter100_20250328_0114.RData'
-result_name = '/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn200_m20_p0.4_q0.3_max_iter100_20250328_0038.RData'
+#result_name = '/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn200_m20_p0.4_q0.3_max_iter100_20250328_0038.RData'
+
+
+## for local load 
+setwd('/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen')
+result_name = 'out_dd_Londonn200_m20_p0.4_q0.3_max_iter100_20250328_0038.RData'
 
 # Extract simulation parameters from result_name
 pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_max_iter(\\d+)"
@@ -49,11 +54,7 @@ summary_df <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
   )
 }))
 
-summary_df$true_mds1_iso1
-summary_df$gm_alltoone_mds1_iso1
-summary_df$gm_pairwise_mds1_iso1
-summary_df$tmp_avg_edges
-summary_df$tmp_W1
+
 
 num_df <- summary_df[, !names(summary_df) %in% "mc"]
 
