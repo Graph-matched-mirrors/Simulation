@@ -767,9 +767,9 @@ registerDoSNOW(cl)
 
 
 set.seed(2)
-n = 200
-p <- 0.3
-q <- 0.4
+n = 500
+p <- 0.4
+q <- 0.3
 nmc = 500
 tmax <- m <- 20
 tstar <- tmax / 2
