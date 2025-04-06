@@ -1,12 +1,13 @@
-#out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
 
 
 #load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
 
 #result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
 #result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
+setwd('/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen')
 
-result_name ="/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_Londonn500_m20_p0.4_q0.2_max_iter100_20250327_1729.RData"
+result_name = "out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
+#result_name = "out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
 
 # Extract simulation parameters from result_name
 pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_num_state(\\d+)_max_iter(\\d+)"
@@ -33,45 +34,6 @@ res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
 }))
 
 
-mean(res_matrix[, 'gm_pairwise_iso_d1' ]^2)
-mean(res_matrix[, 'gm_pairwise_iso_d4' ]^2)
-mean(res_matrix[, 'gm_pairwise_iso_d8' ]^2)
-
-
-x_ticks <- seq(-0.5, 0.5, by = 1/m)
-
-hist(abs(res_matrix[, 'gm_pairwise_iso_d1']),
-  breaks = 50,
-  xlim = c(0, 0.5),
-  xaxt = "n",
-  main = "Histogram of gm_pairwise_iso_d1",
-  xlab = "Value")
-axis(1, at = x_ticks, labels = x_ticks)
-
-hist(abs(res_matrix[, 'gm_pairwise_iso_d4']),
-  breaks = 50,
-  xlim = c(0, 0.5),
-  xaxt = "n",
-  main = "Histogram of gm_pairwise_iso_d4",
-  xlab = "Value")
-axis(1, at = x_ticks, labels = x_ticks)
-
-
-hist((res_matrix[, 'gm_pairwise_iso_d4']),
-  breaks = 50,
-  xlim = c(-0.5, 0.5),
-  xaxt = "n",
-  main = "Histogram of gm_pairwise_iso_d4",
-  xlab = "Value")
-axis(1, at = x_ticks, labels = x_ticks)
-
-hist(abs(res_matrix[, 'shuffle1']),
-  breaks = 50,
-  xlim = c(0, 0.5),
-  xaxt = "n",
-  main = "Histogram of gm_pairwise_iso_d8",
-  xlab = "Value")
-axis(1, at = x_ticks, labels = x_ticks)
 
 # Number of simulations used in the analysis
 nmc <- length(out_dd)
@@ -98,10 +60,10 @@ library(ggplot2)
 # Create two new variables: 'type' and 'iso' from the metric names
 summary_df <- summary_df %>%
   mutate(type = case_when(
-           grepl("^true", metric)       ~ "True",
-           grepl("^shuffle", metric)      ~ "Shuffled",
-           grepl("^gm_alltoone", metric)  ~ "GM All-to-one",
-           grepl("^gm_pairwise", metric)  ~ "GM consecutive pair"
+           grepl("^true", metric)       ~ "dMV true alignment",
+           grepl("^shuffle", metric)      ~ "dMV shuffled",
+           grepl("^gm_alltoone", metric)  ~ "GM all to one",
+           grepl("^gm_pairwise", metric)  ~ "GM consecutive"
          ),
          iso = case_when(
            grepl("iso_d1", metric) ~ "iso_d1+D",
@@ -118,25 +80,85 @@ support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
 chance_level = sum(support^2/length(support))
 chance_level
 # Plot: x-axis is the iso label, and different colors indicate different types
-plot_summary <- ggplot(summary_df, aes(x = iso, y = mean, group = type, color = type)) +
-  geom_point(size = 4) +
-  geom_line(linetype = "dashed", linewidth = 1) +
-  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
+
+summary_df_filtered = summary_df[summary_df$iso!='iso_d1+D',]
+
+plot_summary <- ggplot(summary_df_filtered, aes(x = iso, y = mean, group = type, color = type)) +
+  geom_point(size = 1) +
+  scale_y_continuous(limits = c(0, 0.18))+
+  geom_line(linetype = "dashed") +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
   annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
   geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
-  labs(x = "MDS or ISO+MDS", 
-       y = "Mean Squared Error", 
-       title = paste("n=",n, 'm=',m, 'p=',p, 'q=',q, 'num_state=',num_state, 'max_iter=',max_iter),
-       color = "Type") +
+  labs(x = "", 
+       y = "MSE", 
+       #title = paste("n=",n, 'm=',m, 'p=',p, 'q=',q, 'num_state=',num_state, 'max_iter=',max_iter),
+       color = "metric") +
   theme_minimal() +
-  theme(axis.text = element_text(size = 14),
-        axis.title.x = element_text(size = 18, face = "bold"),
-        axis.title.y = element_text(size = 18, face = "bold"),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 18),
-        plot.title = element_text(size = 18, face = "bold"))
+  scale_color_manual(values = c(
+    "dMV true alignment" = "#7CAE00",  # same as previous dMV
+    "dMV shuffled"       = "#D84315",  # a redder shade than orange, but not pure red
+    "GM all to one"       = "#00BFC4",  # similar blue hue for both alltoone and pairwise
+    "GM consecutive"       = "#00B0F6"   # similar blue hue for both alltoone and pairwise
+  )) +
+  theme(axis.text = element_text(size = 25),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold"),
+        legend.text = element_text(size = 20),
+        #legend.position = "none",  # This line removes the legend
+        legend.title = element_text(size = 20))
 
 print(plot_summary)
+plot_title <- paste('Atlanta-l2-localizer', 'n =', n, 'nmc =', nmc, 'p =', p, 'q =', q)
+filename <- paste0(plot_title, ".pdf")
+filename
+ggsave(filename = filename, plot = plot_summary, device = "pdf", width = 10, height = 6)
 
+
+
+
+
+
+
+######
+mean(res_matrix[, 'gm_pairwise_iso_d1' ]^2)
+mean(res_matrix[, 'gm_pairwise_iso_d4' ]^2)
+mean(res_matrix[, 'gm_pairwise_iso_d8' ]^2)
+
+
+x_ticks <- seq(-0.5, 0.5, by = 1/m)
+
+hist(abs(res_matrix[, 'gm_pairwise_iso_d1']),
+     breaks = 50,
+     xlim = c(0, 0.5),
+     xaxt = "n",
+     main = "Histogram of gm_pairwise_iso_d1",
+     xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
+
+hist(abs(res_matrix[, 'gm_pairwise_iso_d4']),
+     breaks = 50,
+     xlim = c(0, 0.5),
+     xaxt = "n",
+     main = "Histogram of gm_pairwise_iso_d4",
+     xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
+
+
+hist((res_matrix[, 'gm_pairwise_iso_d4']),
+     breaks = 50,
+     xlim = c(-0.5, 0.5),
+     xaxt = "n",
+     main = "Histogram of gm_pairwise_iso_d4",
+     xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
+
+hist(abs(res_matrix[, 'shuffle1']),
+     breaks = 50,
+     xlim = c(0, 0.5),
+     xaxt = "n",
+     main = "Histogram of gm_pairwise_iso_d8",
+     xlab = "Value")
+axis(1, at = x_ticks, labels = x_ticks)
 
 

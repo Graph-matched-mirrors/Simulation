@@ -92,24 +92,27 @@ ci_df$category[grepl("tmp_avg_edges", ci_df$metric)] <- "avg_edges"
 support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
 chance_level = sum(support^2/length(support))
 
-ggplot(ci_df, aes(x = iso, y = mean, group = category, color = category)) +
-  geom_point(size = 4) +
-  geom_line(linetype = "dashed", linewidth = 1) +
-  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
-  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
+p1 <- ggplot(ci_df, aes(x = iso, y = mean, group = category, color = category)) +
+  geom_point(size = 2) +
+  geom_line(linetype = "dashed") +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  annotate("text", x = Inf, y = chance_level, label = "chance level", hjust = 1.1, vjust = -0.5, color = "red") +
   geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
   labs(x = "MDS d ISOMAP to 1", 
        y =  "MSE", 
-       title = paste("n=", n, 'm=', m, 'p=', p, 'q=', q, 'max_iter=', max_iter),
        color = "Category") +
   theme_minimal() +
-  theme(axis.text = element_text(size = 14),
-        axis.title.x = element_text(size = 18, face = "bold"),
-        axis.title.y = element_text(size = 18, face = "bold"),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 18),
+  theme(axis.text = element_text(size = 25),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold"),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 20),
         plot.title = element_text(size = 18, face = "bold"))
 
+print(p1)
+plot_title <- paste('London-both-localizer', 'n =', n, 'nmc =', nmc, 'p =', p, 'q =', q)
+filename <- paste0(plot_title, ".pdf")
+ggsave(filename = filename, plot = plottt1, device = "pdf", width = 8, height = 6)
 
 
         # Filter the data for only iso1
@@ -126,7 +129,7 @@ ci_df_iso2 <- ci_df[ci_df$iso == "iso2", ]
 
 
         # Create the plot for iso1
-        ggplot(ci_df_iso1, aes(x = category, y = mean, group = category, color = category)) +
+        ggplot(ci_df_iso1, aes(x = iso, y = mean, group = category, color = category)) +
           geom_point(size = 4) +
           geom_line(linetype = "dashed", linewidth = 1) +
           #geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
