@@ -767,7 +767,7 @@ registerDoSNOW(cl)
 
 
 set.seed(2)
-n = 500
+n = 800
 p <- 0.4
 q <- 0.3
 nmc = 500
