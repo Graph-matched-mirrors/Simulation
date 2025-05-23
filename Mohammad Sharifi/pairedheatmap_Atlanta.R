@@ -32,4 +32,6 @@ rownames(sd_matrix) <- c(0,d)
 heatmap(mse_matrix, Rowv = NA, Colv = NA,
         main = paste("n =",n, ", p =", p, ", nmc =", nmc),
         xlab = "q", ylab = "shuffling ratio", scale = "none") 
+
 write.csv(final_errors, "~/final_errors_Atlanta.cvs", row.names = FALSE)
+

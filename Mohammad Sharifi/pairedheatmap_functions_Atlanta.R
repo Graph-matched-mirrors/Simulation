@@ -422,15 +422,13 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   
   D2=getD(df$xhat)
   df.mds <- doMDS(D2^2,doplot = FALSE)
-  df.iso <- doIso(df.mds, mdsd=10)
   errors <- NULL
-  errors[1] <- linf_error(df.iso$iso, m)
+  errors[1] <- linf_error(df.mds$mds[,1], m)
   i <- 2
   for(perc in del){
     D2_shuffle=getD(df[[paste0("xhat_", perc)]])
     df.mds_shuffle <- doMDS(D2_shuffle^2,doplot = FALSE)
-    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
-    errors[i] <- linf_error(df.iso_shuffle$iso, m)
+    errors[i] <- linf_error(df.mds_shuffle$mds[,1], m)
     i <- i + 1
   }
   print(paste(n,q,Sys.time()))
