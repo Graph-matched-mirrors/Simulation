@@ -165,14 +165,11 @@ doMDS <- function(D, doplot=TRUE)
 }
 
 #apply ISOMAP on the CMDS result with chosen dimension mdsd from CMDS step defaultly it always embeds to 1 
-doIso <- function(df.mds, mdsd=2, isod=1, doplot=F, AtlantaFlag = F)
+doIso <- function(df.mds, mdsd=2, isod=1, doplot=F)
 {
   mds <- df.mds$mds
   df.iso <- NULL
   dis <- vegdist(mds[,1:mdsd,drop=F], "euclidean")
-  if(AtlantaFlag){
-    dis <- dis^2
-  }
   knn <- 1
   success <- FALSE
   while(!success) {
@@ -334,58 +331,46 @@ linf_error=function(x, tmax){
   return((ecp-tstar)/tmax)
 }
 
-
 jump_Lbd=function(cp,p, delta){
   if(runif(1)<1-p){
     np=cp
   } else {
-    np=delta
+    np=0.1+delta
   }
   return(np)
 }
-
-
 jump_Rbd=function(cp,p, delta){
   if(runif(1)<1-p){
     np=cp
   } else {
-    np=1-delta
+    np=0.9-delta
   }
 }
-
 jump_middle=function(cp,p, delta){
   u=runif(1)
   if(u<p){
-    
     np=cp+delta
-    
   }
-  
   if(p<u & u<2*p){
     np=cp-delta
   }
-  
   if(u>2*p){
     np=cp
   }
   return(np)
 }
-
-
-
-update_function=function(current_position,p , delta){
-  if( abs(current_position-0)<10^(-2) ){
+update_function=function(current_position,p, delta){
+  if( abs(current_position-0.1)<10^(-10) ){
     next_position=jump_Lbd(current_position,p,delta)
   }
-  if(current_position> (0+10^(-2)) & current_position <(1-10^(-2)) ){
+  if(current_position> (0.1+10^(-10)) & current_position <(0.9-10^(-10)) ){
     next_position=jump_middle(current_position,p,delta)
   }
-  if(abs(current_position-1)<10^(-2)){
+  if(abs(current_position-0.9)<10^(-10)){
     next_position=jump_Rbd(current_position,p,delta)
   }
   return(next_position)
 }
-
 
 shuffle_perc_graph <- function(A, del, n){
   G=as.matrix(A)
@@ -404,10 +389,10 @@ shuffle_perc_graph <- function(A, del, n){
   }
 }
 
-paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, delta = 0.1, tstar = 25, del = c(0.1,0.2)){
-  
+paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, Num_states = 50, tstar = 25, del = c(0.1,0.2)){
+  delta = (0.9-0.1)/Num_states
   xt=matrix(0,nrow = n, ncol = m+1)
-  initial_state_all_nodes=sample(seq(0,1,by=delta),n,replace = TRUE)
+  initial_state_all_nodes=sample(seq(0.1,0.9,by=delta),n,replace = TRUE)
   xt[,1]=initial_state_all_nodes
   for (i in 1:n) {
     for (j in 2:(tstar)) {
@@ -436,23 +421,23 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   ### make graph
   
   D2=getD(df$xhat)
-  df.mds <- doMDS(D2,doplot = FALSE)
-  df.iso <- doIso(df.mds, mdsd=10, AtlantaFlag=T)
+  df.mds <- doMDS(D2^2,doplot = FALSE)
+  df.iso <- doIso(df.mds, mdsd=10)
   errors <- NULL
   errors[1] <- linf_error(df.iso$iso, m)
   i <- 2
   for(perc in del){
     D2_shuffle=getD(df[[paste0("xhat_", perc)]])
-    df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
-    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10, AtlantaFlag=T)
+    df.mds_shuffle <- doMDS(D2_shuffle^2,doplot = FALSE)
+    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
     errors[i] <- linf_error(df.iso_shuffle$iso, m)
     i <- i + 1
   }
   print(paste(n,q,Sys.time()))
   errors
 }
-paired_error_in_shuffling <- function(nmc = 50, n = 1000, p = 0.4, q = 0.15, m = 50, delta = 0.1, tstar = 25, del = 0.1){
-  mc_errors <- sapply(1:nmc, function(i) paired_error_in_shuffling_once(n, p, q, m, delta, tstar, del))
+paired_error_in_shuffling <- function(nmc = 50, n = 1000, p = 0.4, q = 0.15, m = 50, Num_states = 50, tstar = 25, del = 0.1){
+  mc_errors <- sapply(1:nmc, function(i) paired_error_in_shuffling_once(n, p, q, m, Num_states, tstar, del))
   row_mse <- apply(mc_errors, 1, function(row) mean(abs(row)^2)) # mean(abs(errors[row,])^2)
   row_sds <- apply(mc_errors, 1, function(row) sd(abs(row)^2) / sqrt(nmc)) # sd(abs(errors[row,])^2) / sqrt(nmc)
   cbind(row_mse, row_sds)
