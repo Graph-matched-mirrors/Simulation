@@ -2,8 +2,8 @@ m <- 40
 tstar <- 20
 Num_states <- m 
 p <- 0.4
-q <- seq(0,0.05, by = 0.05)
-d <- seq(0.05, 0.1, by = 0.05)
+q <- seq(0, 1, by = 0.05)
+d <- seq(0.05, 1, by = 0.05)
 n <- 300
 nmc <- 100
 final_errors <- NULL
