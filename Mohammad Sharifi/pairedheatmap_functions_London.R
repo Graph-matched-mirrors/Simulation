@@ -358,7 +358,7 @@ shuffle_perc_graph <- function(A, del, n){
 
 paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, Num_states = 50, tstar = 25, del = c(0.1,0.2)){
   delta = (1-0.1)/Num_states
-  xt <- matrix(0,n,(tmax+1))
+  xt <- matrix(0,n,(m+1))
   
   for (t in 2:(tstar+1)) {
     tmp <- runif(n) < p
@@ -366,9 +366,9 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
     xt[tmp,t] <- xt[tmp,t] + delta
   }
   
-  for (t in (tstar+2):(tmax+1)) {
+  for (t in (tstar+2):(m+1)) {
     tmp <- runif(n) < q
-    xt[,t] <- xt[,t] + Xt[,t-1]
+    xt[,t] <- xt[,t] + xt[,t-1]
     xt[tmp,t] <- xt[tmp,t] + delta
   }
   xt <- xt[,-1]
