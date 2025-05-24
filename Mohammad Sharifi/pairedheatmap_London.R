@@ -1,6 +1,6 @@
 m <- 40
 tstar <- 20
-Num_states <- m
+Num_states <- m + 1
 p <- 0.4
 q <- seq(0,1, by = 0.05)
 d <- seq(0.05, 1, by = 0.05)

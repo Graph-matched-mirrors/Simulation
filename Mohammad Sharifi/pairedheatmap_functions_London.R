@@ -357,19 +357,22 @@ shuffle_perc_graph <- function(A, del, n){
 }
 
 paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, Num_states = 50, tstar = 25, del = c(0.1,0.2)){
-  delta = (0.9-0.1)/Num_states
-  xt=matrix(0,nrow = n, ncol = m+1)
-  initial_state_all_nodes=sample(0.1, n,replace = TRUE)
-  xt[,1]=initial_state_all_nodes
-  for (i in 1:n) {
-    for (j in 2:(tstar)) {
-      xt[i,j]=update_function(xt[i,j-1],p,delta)
-    }
-    for (j in ((tstar+1):(m+1)) ) {
-      xt[i,j]=update_function(xt[i,j-1],q,delta)
-    }
+  delta = (1-0.1)/Num_states
+  xt <- matrix(0,n,(tmax+1))
+  
+  for (t in 2:(tstar+1)) {
+    tmp <- runif(n) < p
+    xt[,t] <- xt[,t] + xt[,t-1]
+    xt[tmp,t] <- xt[tmp,t] + delta
   }
   
+  for (t in (tstar+2):(tmax+1)) {
+    tmp <- runif(n) < q
+    xt[,t] <- xt[,t] + Xt[,t-1]
+    xt[tmp,t] <- xt[tmp,t] + delta
+  }
+  xt <- xt[,-1]
+  xt <- xt+0.1
   
   
   
@@ -389,15 +392,15 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   
   D2=getD(df$xhat)
   df.mds <- doMDS(D2,doplot = FALSE)
-  df.iso <- doIso(df.mds, mdsd=10)
+  #df.iso <- doIso(df.mds, mdsd=10)
   errors <- NULL
-  errors[1] <- linf_error(df.iso$iso, m)
+  errors[1] <- linf_error(df.mds$mds[,1], m)
   i <- 2
   for(perc in del){
     D2_shuffle=getD(df[[paste0("xhat_", perc)]])
     df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
-    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
-    errors[i] <- linf_error(df.iso_shuffle$iso, m)
+    #df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
+    errors[i] <- linf_error(df.mds_shuffle$mds[,1], m)
     i <- i + 1
   }
   print(paste(n,q,Sys.time()))
