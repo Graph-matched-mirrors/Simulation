@@ -92,6 +92,41 @@ ci_df$category[grepl("tmp_avg_edges", ci_df$metric)] <- "avg_edges"
 support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
 chance_level = sum(support^2/length(support))
 
+
+library(dplyr)
+
+filtered_df <- ci_df %>%
+  group_by(category) %>%
+  slice_min(mean, with_ties = FALSE) %>%
+  ungroup()
+
+p2 <- ggplot(filtered_df, aes(x = iso, y = mean, group = category, color = category)) +
+  geom_point(size = 2) +
+  scale_y_continuous(limits = c(0, 0.003))+
+  #geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  #annotate("text", x = Inf, y = chance_level, label = "chance level", hjust = 1.1, vjust = -0.5, color = "red") +
+  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
+  labs(x = "MDS d ISOMAP to 1", 
+       y =  "MSE", 
+       color = "Category") +
+  theme_minimal() +
+  scale_color_manual(values = c(
+    "dMV true alignment" = "#7CAE00",  # same as previous dMV
+    "W1"             = "#C77CFF",  # same as before
+    "avg degree"      = "#F8766D",  # same as previous avg_degree
+    "dMV shuffled"       = "#D84315",  # a redder shade than orange, but not pure red
+    "GM all to one"       = "#00BFC4",  # similar blue hue for both alltoone and pairwise
+    "GM consecutive"       = "#00B0F6"   # similar blue hue for both alltoone and pairwise
+  ))+
+  theme(axis.text = element_text(size = 25),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold"),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 20),
+        plot.title = element_text(size = 18, face = "bold"))
+
+print(p2)
+
 p1 <- ggplot(ci_df, aes(x = iso, y = mean, group = category, color = category)) +
   geom_point(size = 2) +
   geom_line(linetype = "dashed") +
@@ -154,9 +189,8 @@ ci_df_iso2 <- ci_df[ci_df$iso == "iso2", ]
 
 
 
-out_dd[[100]]$tmp_W1
 
-df = out_dd[[200]]$example_df
+df = out_dd[[300]]$example_df
 
 tstar = m/2
 D2 <- getD(df$xhat)
@@ -180,36 +214,88 @@ df.mds_W1 <- doMDS(Dhat_W1, doplot = T)
 df.mds_no_square <- doMDS(D2, doplot = T)
 df.mds_shuffle_no_square <- doMDS(D2_shuffle, doplot = T)
 df.mds_shuffle_GM_alltoone_no_square <- doMDS(D2_shuffle_GM_alltoone, doplot = T)
-df.mds_shuffle_GM_pairwise_no_square <- doMDS(D2_shuffle_GM_pairwise, doplot = F)
+df.mds_shuffle_GM_pairwise_no_square <- doMDS(D2_shuffle_GM_pairwise, doplot = T)
 
 find_slope_changepoint_with_plot(sqrt_edges, doplot = T)$error
 find_slope_changepoint_with_plot(df.mds_W1$mds[,1], doplot = T)$error
 find_slope_changepoint_with_plot(df.mds_no_square$mds[,1], doplot = T)$error
 find_slope_changepoint_with_plot(df.mds_shuffle_no_square$mds[,1], doplot = T)$error
 find_slope_changepoint_with_plot(df.mds_shuffle_GM_alltoone_no_square $mds[,1], doplot = T)$error
-find_slope_changepoint_with_plot(df.mds_shuffle_GM_pairwise_no_square $mds[,1], doplot = T)$error
+find_slope_changepoint_with_plot(df.mds_shuffle_GM_pairwise_no_square$mds[,1], doplot = T)$error
 
 
 
-  d_chose = c(1, 2, 3)
-  for (k in 1:3) {
-    
-    dd = d_chose[k]
-    
-    df.iso <- doIso(df.mds_no_square$mds, mdsd = dd)$iso
-    df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd = dd)$iso
-    df.iso_shuffle_GM_alltoone <- doIso(df.mds_shuffle_GM_alltoone_no_square$mds, mdsd = dd)$iso
-    df.iso_shuffle_GM_pairwise <- doIso(df.mds_shuffle_GM_pairwise_no_square$mds, mdsd = dd)$iso
-    
-    tmp1[k] <- find_slope_changepoint_with_plot(df.iso, doplot = F)$error
-    tmp2[k] <- find_slope_changepoint_with_plot(df.iso_shuffle, doplot = F)$error
-    tmp3[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_alltoone, doplot = F)$error
-    tmp4[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_pairwise, doplot = F)$error
-  }
+d_chose = c(1, 2, 3)
 
-      df.iso <- doIso(df.mds_no_square$mds, mdsd = 1)$iso
-    df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd = dd)$iso
-    df.iso_shuffle_GM_alltoone <- doIso(df.mds_shuffle_GM_alltoone_no_square$mds, mdsd = dd)$iso
-    df.iso_shuffle_GM_pairwise <- doIso(df.mds_shuffle_GM_pairwise_no_square$mds, mdsd = dd)$iso
+
+k=3
+dd = d_chose[k]
+dd= 8
     
+df.iso <- doIso(df.mds_no_square$mds, mdsd = dd)$iso
+df.iso_shuffle <- doIso(df.mds_shuffle_no_square$mds, mdsd = dd)$iso
+df.iso_shuffle_GM_alltoone <- doIso(df.mds_shuffle_GM_alltoone_no_square$mds, mdsd = dd)$iso
+df.iso_shuffle_GM_pairwise <- doIso(df.mds_shuffle_GM_pairwise_no_square$mds, mdsd = dd)$iso
+    
+tmp1[k] <- find_slope_changepoint_with_plot(df.iso, doplot = T)$error
+tmp2[k] <- find_slope_changepoint_with_plot(df.iso_shuffle, doplot = T)$error
+tmp3[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_alltoone, doplot = T)$error
+tmp4[k] <- find_slope_changepoint_with_plot(df.iso_shuffle_GM_pairwise, doplot = T)$error
+
+
 find_slope_changepoint_with_plot(df.iso, doplot = T)$error
+
+
+OFV_true = OFV_shuffle = OFV_alltoone = OFV_pairwise = matrix(0,m,m)
+
+
+
+for (i in 1:m) {
+  for (j in 1:m) {
+    OFV_true[i,j] =  norm(df$g[[i]][] -  df$g[[j]][],'F')
+    OFV_shuffle[i,j] = norm(df$shuffle_g[[i]][] -  df$shuffle_g[[j]][],'F')
+    OFV_alltoone[i,j]  =  norm(df$shuffle_g_GM_alltoone[[i]][] -  df$shuffle_g_GM_alltoone[[j]][],'F')
+    OFV_pairwise[i,j]  =  norm(df$shuffle_g_GM_pairwise[[i]][] -  df$shuffle_g_GM_pairwise[[j]][],'F')
+  }
+}
+
+library(pheatmap)
+
+
+
+pheatmap(OFV_true,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         display_numbers = TRUE,    # Show the value in each cell
+         color = heat.colors(256),
+         main = "Heatmap of OFV with true alignment")
+
+pheatmap(OFV_shuffle,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         display_numbers = TRUE,    # Show the value in each cell
+         color = heat.colors(256),
+         main = "Heatmap of OFV before GM with Values")
+
+MDS_OFV=doMDS(OFV)
+plot(1:20,sqrt(MDS_OFV$mds[,1]+30))
+
+pheatmap(OFV_alltoone,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         display_numbers = TRUE,    # Show the value in each cell
+         color = heat.colors(256),
+         main = "Heatmap of OFV_alltoone with Values")
+
+doMDS(OFV_alltoone)
+
+
+
+pheatmap(OFV_pairwise,
+         cluster_rows = FALSE,
+         cluster_cols = FALSE,
+         display_numbers = TRUE,    # Show the value in each cell
+         color = heat.colors(256),
+         main = "Heatmap of OFV_pairwise with Values")
+
+doMDS(OFV_pairwise)

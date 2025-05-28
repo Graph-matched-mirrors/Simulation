@@ -38,8 +38,9 @@ library(ggplot2)
 ## for local load 
 setwd('/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen')
 #result_name = 'out_dd_Londonn200_m20_p0.4_q0.3_max_iter100_20250328_0038.RData'
-result_name = 'out_dd_Londonn200_m20_p0.3_q0.4_max_iter100_20250328_0114.RData'
-
+#result_name = 'out_dd_Londonn200_m20_p0.3_q0.4_max_iter100_20250328_0114.RData'
+#result_name='out_dd_Londonn500_m20_p0.4_q0.3_max_iter100_20250406_0337.RData'
+result_name = 'out_dd_Londonn800_m20_p0.4_q0.3_max_iter100_20250407_1229.RData'
 # Extract simulation parameters from result_name
 pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_max_iter(\\d+)"
 matches <- regmatches(result_name, regexec(pattern, result_name))[[1]]
@@ -107,7 +108,7 @@ ci_df$iso <- ifelse(grepl("mds1", ci_df$metric), "iso1",
 ci_df$category <- ifelse(grepl("true", ci_df$metric), "dMV true alignment",
                          ifelse(grepl("shuffled", ci_df$metric), "dMV shuffled",
                                 ifelse(grepl("alltoone", ci_df$metric), "GM all to one",
-                                       ifelse(grepl("pairwise", ci_df$metric), "GM concecutive", NA))))
+                                       ifelse(grepl("pairwise", ci_df$metric), "GM consecutive", NA))))
 
 ci_df$iso[grepl("tmp_W1|tmp_avg_edges", ci_df$metric)] <- "iso1"
 ci_df$category[grepl("tmp_W1", ci_df$metric)] <- "W1"
@@ -120,17 +121,19 @@ chance_level = sum(support^2/length(support))
 
 ci_df_iso1 <- ci_df[ci_df$iso == "iso1", ]
 
+library(ggplot2)
+
 # Create the plot for iso1
-plottt1 <- ggplot(ci_df_iso1, aes(x = iso, y = mean, color = category)) +
-  geom_point(size = 4) +
-  scale_y_continuous(limits = c(0, 0.04))+
-  #geom_hline(yintercept = chance_level, linetype = "dotted", color = "red", linewidth = 1) +
-  #annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
+plottt2 <- ggplot(ci_df_iso1, aes(x = iso, y = mean, color = category)) +
+  geom_point(size = 1) +
+  scale_y_continuous(limits = c(0, 0.002))+
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
   geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
   labs(
     x = "", 
     y = "MSE", 
-    #title = paste("n=", n, 'm=', m, 'p=', p, 'q=', q, 'max_iter=', max_iter, " (iso1 only)"),
+    title = paste("n=", n, 'm=', m, 'p=', p, 'q=', q, 'max_iter=', max_iter, " (iso1 only)"),
     color = "metric"
   ) +
   theme_minimal() +
@@ -140,7 +143,7 @@ plottt1 <- ggplot(ci_df_iso1, aes(x = iso, y = mean, color = category)) +
     "avg degree"      = "#F8766D",  # same as previous avg_degree
     "dMV shuffled"       = "#D84315",  # a redder shade than orange, but not pure red
     "GM all to one"       = "#00BFC4",  # similar blue hue for both alltoone and pairwise
-    "GM concecutive"       = "#00B0F6"   # similar blue hue for both alltoone and pairwise
+    "GM consecutive"       = "#00B0F6"   # similar blue hue for both alltoone and pairwise
   )) +
   theme(
     axis.text = element_text(size = 14),
@@ -151,7 +154,7 @@ plottt1 <- ggplot(ci_df_iso1, aes(x = iso, y = mean, color = category)) +
     #legend.position = "none",  # This line removes the legend
     plot.title = element_text(size = 18, face = "bold")
   )
-print(plottt1)
+print(plottt2)
 #
 plot_title <- paste('London-l2-localizer-MDS1', 'n =', n, 'nmc =', nmc, 'p =', p, 'q =', q)
 filename <- paste0(plot_title, ".pdf")
@@ -193,8 +196,39 @@ print(p1)
 #filename <- paste0(plot_title, ".pdf")
 #ggsave(filename = filename, plot = plottt1, device = "pdf", width = 8, height = 6)
 
+library(dplyr)
 
-# Filter the data for only iso1
+filtered_df <- ci_df %>%
+  group_by(category) %>%
+  slice_min(mean, with_ties = FALSE) %>%
+  ungroup()
+filtered_df
 
+p1 <- ggplot(filtered_df, aes(x = iso, y = mean, group = category, color = category)) +
+  geom_point(size = 1) +
+  scale_y_continuous(limits = c(0, 0.002))+
+  geom_line(linetype = "dashed") +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  annotate("text", x = Inf, y = chance_level, label = "chance level", hjust = 1.1, vjust = -0.5, color = "red") +
+  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
+  labs(x = "MDS d ISOMAP to 1", 
+       y =  "MSE", 
+       color = "Category") +
+  theme_minimal() +
+  scale_color_manual(values = c(
+    "dMV true alignment" = "#7CAE00",  # same as previous dMV
+    "W1"             = "#C77CFF",  # same as before
+    "avg degree"      = "#F8766D",  # same as previous avg_degree
+    "dMV shuffled"       = "#D84315",  # a redder shade than orange, but not pure red
+    "GM all to one"       = "#00BFC4",  # similar blue hue for both alltoone and pairwise
+    "GM consecutive"       = "#00B0F6"   # similar blue hue for both alltoone and pairwise
+  )) +
+  theme(axis.text = element_text(size = 25),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold"),
+        legend.text = element_text(size = 20),
+        legend.title = element_text(size = 20),
+        plot.title = element_text(size = 18, face = "bold"))
 
+print(p1)
 
