@@ -1,16 +1,14 @@
-
-m <- 50
-tstar <- 25
-delta <- 0.1
+m <- 40
+tstar <- 20
+Num_states <- 50
 p <- 0.4
 q <- seq(0,0.5, by = 0.05)
-d <- seq(0, 1, by = 0.05)
+d <- seq(0.05, 1, by = 0.05)
 n <- 300
 nmc <- 100
 final_errors <- NULL
-delta <- 0.1
 for(i in 1:length(q)){
-  temp_errors <- paired_error_in_shuffling(nmc = nmc, n = n, p = p, q = q[i], m = m, delta = delta, tstar = tstar, del = d)
+  temp_errors <- paired_error_in_shuffling(nmc = nmc, n = n, p = p, q = q[i], m = m, Num_states = Num_states, tstar = tstar, del = d)
   final_errors[[paste0("row_mse_", q[i])]] <- temp_errors[,1]
   final_errors[[paste0("row_sds_", q[i])]] <- temp_errors[,2]
   print(paste(q[i]," is done! "))
@@ -34,4 +32,6 @@ rownames(sd_matrix) <- c(0,d)
 heatmap(mse_matrix, Rowv = NA, Colv = NA,
         main = paste("n =",n, ", p =", p, ", nmc =", nmc),
         xlab = "q", ylab = "shuffling ratio", scale = "none") 
-write.csv(final_errors, "~/final_errors.cvs", row.names = FALSE)
+
+write.csv(final_errors, "~/final_errors_Atlanta.cvs", row.names = FALSE)
+
