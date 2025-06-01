@@ -55,10 +55,10 @@ library(dplyr)  # For filtering the data
 
 # Filter the data for specific shuffle ratios
 filtered_summary <- summary %>%
-  filter(`shuffle ratio` %in% c(0, 0.05, 0.3))
+  filter(`shuffle ratio` %in% c(0, 0.25, 0.5, 0.75,1))
 
 filtered_summary <- summary %>%
-  filter(q %in% c(0.3,0.4,0.45))
+  filter(q %in% c(0.1,0.4,0.45))
 
 plottt <- ggplot(filtered_summary, aes(x = `shuffle ratio`, y = mean, color = q, linetype=q ,group = q)) +
   geom_line(linetype = "dashed") +
@@ -76,6 +76,7 @@ print(plottt)
 plottt <- ggplot(filtered_summary, aes(x = q, y = mean, color = `shuffle ratio`, group = `shuffle ratio`)) +
   geom_line() +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  geom_jitter()+
   labs(y = 'MSE', x = 'q', color = 'Shuffle Ratio') +
   theme(
     axis.text = element_text(size = 15),
