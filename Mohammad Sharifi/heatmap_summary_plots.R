@@ -9,11 +9,11 @@ nmc <- 100
 
 library(readr)
 final_errors <- read_csv("/Users/mohammad/Documents/Simulation/Mohammad Sharifi/final_errors_London.cvs")
-final_errors <- read_csv("/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Mohammad Sharifi/final_errors_Atlanta.cvs")
+final_errors <- read_csv("/Users/mohammad/Documents/Simulation/Mohammad Sharifi/final_errors_Atlanta.cvs")
 
 View(final_errors)
-final_mse=final_errors[,seq(1,42,by=2)]
-final_sd=final_errors[,seq(2,42,by=2)]
+final_mse=final_errors[,seq(1,22,by=2)]
+final_sd=final_errors[,seq(2,22,by=2)]
 
 final_mse$row_mse_0.4
 
@@ -58,7 +58,7 @@ filtered_summary <- summary %>%
   filter(`shuffle ratio` %in% c(0, 0.25, 0.5, 0.75,1))
 
 filtered_summary <- summary %>%
-  filter(q %in% c(0.1,0.4,0.45))
+  filter(q %in% c(0.1,0.2, 0.35, 0.4, 0.5))
 
 plottt <- ggplot(filtered_summary, aes(x = `shuffle ratio`, y = mean, color = q, linetype=q ,group = q)) +
   geom_line(linetype = "dashed") +
@@ -68,6 +68,32 @@ plottt <- ggplot(filtered_summary, aes(x = `shuffle ratio`, y = mean, color = q,
   theme(
     axis.text = element_text(size = 15),
     axis.title = element_text(size = 15, face = "bold")
+  )
+
+print(plottt)
+plottt <- ggplot(filtered_summary, aes(x = `shuffle ratio`, y = mean, color = q, linetype=q ,group = q)) +
+  geom_line(linetype = "dashed") +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
+  labs(y = 'MSE', x = 'Shuffle ratio', color = 'q') +
+  theme(
+    axis.text = element_text(size = 15),
+    axis.title = element_text(size = 15, face = "bold")
+  )
+print(plottt)
+plottt <- ggplot(filtered_summary, aes(x = `shuffle ratio`, y = mean, color = q, linetype = q, group = q)) +
+  geom_line(linetype = "dashed") +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  annotate("text", x = Inf, y = chance_level, label = "chance level", hjust = 1.1, vjust = -0.5, color = "red") +
+  labs(y = 'MSE', x = 'Shuffle ratio', color = 'q', linetype = 'q') +
+  scale_y_continuous(limits = c(0, 0.12), breaks = seq(0, 0.12, by = 0.02)) +  # <-- force y-axis range and ticks
+  theme(
+    axis.text = element_text(size = 15),
+    axis.title = element_text(size = 15, face = "bold"),
+    legend.text = element_text(size = 15),
+    legend.title = element_text(size = 15, face = "bold")
   )
 
 print(plottt)
@@ -120,7 +146,7 @@ heatmap_plot <- ggplot(data_melt, aes(Var2, Var1, fill = value)) +
     colors = colorRampPalette(c("#FFF5F5", "#FFD6D6", "#FF9999", "#FF4D4D", "#FF0000", "#B20000", "#7F0000"))(100),
     name = "MSE"
   ) +
-  labs(title = "n=300,p=0.4,nmc=100", x = "q", y = "Shuffle Ratio") +
+  labs(x = "q", y = "Shuffle Ratio") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
