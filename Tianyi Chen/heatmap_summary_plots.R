@@ -64,6 +64,7 @@ plottt <- ggplot(filtered_summary, aes(x = `shuffle ratio`, y = mean, color = q,
   geom_line(linetype = "dashed") +
   geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
   labs(y = 'MSE', x = 'Shuffle ratio', color = 'q') +
   theme(
     axis.text = element_text(size = 15),

@@ -137,6 +137,36 @@ true_London_dMV = function(tt,t0,p,q){
 }
 
 
+true_shuffled_dMV_square_London = function(tt,t0,p,q){
+  
+  D=matrix(0,tt,tt)
+  for (i in 1:t0) {
+    for (j in (i):t0) {
+      D[i,j]=sqrt(delta^2*(p^2*(i-j)^2 + (p-p^2)*(i+j)))
+    }
+  }
+  
+  for (i in t0:tt) {
+    for (j in (i):tt) {
+      D[i,j]=sqrt(delta^2*(q^2*(i-j)^2 + (q-q^2)*(i+j) +2*t0*(p-p^2-q+q^2) ))
+    }
+  }
+  
+  for (i in 1:(t0-1)) {
+    for (j in (t0+1):tt) {
+      m=t0-i
+      n=j-t0
+      D[i,j]=sqrt( delta^2*( ( (j-t0)*q+(t0-i)*p  )^2 + (p-p^2)*(i+t0) +(q-q^2)*(j-t0)    )  )
+    }
+  }
+  D=D+t(D)
+  D2=D^2
+  diag(D2) = 0
+  return(D2)
+}
+
+
+
 
 getD_W1 <- function(Xlist) {
   m <- length(Xlist)
@@ -539,20 +569,31 @@ shuffle_X <- function(X,del){
   return(random_perm %*% X)
 }
 
-optimized_shuffled_X <- function(X, del) {
+shuffle_X_optimized <- function(X, del) {
   n <- nrow(X)
   dn <- floor(del * n)
   
-  # Generate random permutation indices
-  perm_indices <- sample(n, dn)  # Randomly pick `dn` row indices
-  permuted_indices <- sample(perm_indices)  # Shuffle only those indices
+  # If dn is 0, no rows need shuffling, so we can return X immediately.
+  if (dn == 0) {
+    return(X)
+  }
   
-  # Swap rows in X efficiently
-  X[perm_indices, ] <- X[permuted_indices, ]
+  # 1. Define the indices of the rows that will NOT change.
+  unchanged_indices <- 1:(n - dn)
   
-  return(X)
+  # 2. Define the indices of the rows that WILL be shuffled.
+  rows_to_shuffle <- (n - dn + 1):n
+  
+  # 3. Shuffle that latter block of indices.
+  shuffled_part <- sample(rows_to_shuffle)
+  
+  # 4. Combine the unchanged and shuffled indices into the final order.
+  final_order <- c(unchanged_indices, shuffled_part)
+  
+  # 5. Reorder the matrix rows directly using the index vector.
+  # The 'drop = FALSE' ensures the result is always a matrix.
+  return(X[final_order, , drop = FALSE])
 }
-
 
 true_Atlanta_dmv <- function(p,q,num_state,m,tstar,delta){
   library(expm) 
