@@ -421,12 +421,12 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   ### make graph
   
   D2=getD(df$xhat)
-  df.mds <- doMDS(D2,doplot = FALSE)
-  df.iso <- doIso(df.mds, mdsd=10)
-  #df.mds <- doMDS(D2^2,doplot = FALSE)
+  #df.mds <- doMDS(D2,doplot = FALSE)
+  #df.iso <- doIso(df.mds, mdsd=10)
+  df.mds <- doMDS(D2^2,doplot = FALSE)
   errors <- NULL
-  #errors[1] <- linf_error(df.mds$mds[,1], m)
-  errors[1] <- linf_error(df.iso$iso, m)
+  errors[1] <- linf_error(df.mds$mds[,1], m)
+  #errors[1] <- linf_error(df.iso$iso, m)
   i <- 2
   for(perc in del){
     

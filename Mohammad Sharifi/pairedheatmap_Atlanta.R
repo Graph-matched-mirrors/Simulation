@@ -1,8 +1,9 @@
+set.seed(10)
 m <- 40
 tstar <- 20
 Num_states <- 50
 p <- 0.4
-q <- seq(0,0.5, by = 0.05)
+q <- c(0.1, 0.2, 0.35, 0.4, 0.5)
 d <- seq(0.05, 1, by = 0.05)
 n <- 300
 nmc <- 100
@@ -33,5 +34,5 @@ heatmap(mse_matrix, Rowv = NA, Colv = NA,
         main = paste("n =",n, ", p =", p, ", nmc =", nmc),
         xlab = "q", ylab = "shuffling ratio", scale = "none") 
 
-write.csv(final_errors, "~/final_errors_Atlanta.cvs", row.names = FALSE)
+write.csv(final_errors, "~/final_errors_Atlanta3.cvs", row.names = FALSE)
 

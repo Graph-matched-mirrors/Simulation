@@ -9,11 +9,11 @@ nmc <- 100
 
 library(readr)
 final_errors <- read_csv("/Users/mohammad/Documents/Simulation/Mohammad Sharifi/final_errors_London.cvs")
-final_errors <- read_csv("/Users/mohammad/Documents/Simulation/Mohammad Sharifi/final_errors_Atlanta.cvs")
-
+final_errors <- read_csv("/Users/mohammad/Documents/Simulation/Mohammad Sharifi/final_errors_Atlanta3.cvs")
+final_errors <- read_csv("~/final_errors_Atlanta3.cvs")
 View(final_errors)
-final_mse=final_errors[,seq(1,22,by=2)]
-final_sd=final_errors[,seq(2,22,by=2)]
+final_mse=final_errors[,seq(1,10,by=2)]
+final_sd=final_errors[,seq(2,11,by=2)]
 
 final_mse$row_mse_0.4
 
