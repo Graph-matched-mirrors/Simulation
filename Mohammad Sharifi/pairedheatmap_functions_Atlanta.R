@@ -423,27 +423,40 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   ### make graph
   
   D2=getD(df$xhat)
-  #df.mds <- doMDS(D2,doplot = FALSE)
-  #df.iso <- doIso(df.mds, mdsd=10)
-  df.mds <- doMDS(D2^2,doplot = FALSE)
-  errors <- NULL
-  errors[1] <- find_slope_changepoint_with_plot(df.mds$mds[,1], doplot = FALSE)$error
-  #errors[1] <- linf_error(df.iso$iso, m)
+  df.mds <- doMDS(D2,doplot = FALSE)
+  df.iso <- doIso(df.mds, mdsd=10)
+  df.mds2 <- doMDS(D2^2,doplot = FALSE)
+  errors_d_l2 <- NULL
+  errors_d_li <- NULL
+  errors_d2_l2 <- NULL
+  errors_d2_li <- NULL
+  errors_iso_l2 <- NULL
+  errors_iso_li <- NULL
+  errors_d_l2[1] <- find_slope_changepoint_with_plot(df.mds$mds[,1], doplot = FALSE)$error
+  errors_d2_l2[1] <- find_slope_changepoint_with_plot(df.mds2$mds[,1], doplot = FALSE)$error
+  errors_iso_l2[1] <- find_slope_changepoint_with_plot(df.iso$iso, doplot = FALSE)$error
+  errors_d_li[1] <- linf_error(df.mds$mds[,1], m)
+  errors_d2_li[1] <- linf_error(df.mds2$mds[,1], m)
+  errors_iso_li[1] <- linf_error(df.iso$iso, m)
   i <- 2
   for(perc in del){
     
-    #D2_shuffle=getD(df[[paste0("xhat_", perc)]])
-    #df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
-    #df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
+    D2_shuffle=getD(df[[paste0("xhat_", perc)]])
+    df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
+    df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
+    df.mds_shuffle2 <- doMDS(D2_shuffle^2,doplot = FALSE)
     #errors[i] <- linf_error(df.iso_shuffle$iso, m)
     
-    D2_shuffle=getD(df[[paste0("xhat_", perc)]])
-    df.mds_shuffle <- doMDS(D2_shuffle^2,doplot = FALSE)
-    errors[i] <- find_slope_changepoint_with_plot(df.mds_shuffle$mds[,1], doplot = FALSE)$error
+    errors_d_l2[i] <- find_slope_changepoint_with_plot(df.mds_shuffle$mds[,1], doplot = FALSE)$error
+    errors_d2_l2[i] <- find_slope_changepoint_with_plot(df.mds_shuffle2$mds[,1], doplot = FALSE)$error
+    errors_iso_l2[i] <- find_slope_changepoint_with_plot(df.iso_shuffle$iso, doplot = FALSE)$error
+    errors_d_li[i] <- linf_error(df.mds_shuffle$mds[,1], m)
+    errors_d2_li[i] <- linf_error(df.mds_shuffle2$mds[,1], m)
+    errors_iso_li[i] <- linf_error(df.iso_shuffle$iso, m)
     i <- i + 1
   }
   print(paste(n,q,Sys.time()))
-  errors
+  c(errors_d_l2, errors_d2_l2, errors_iso_l2, errors_d_li, errors_d2_li, errors_iso_li)
 }
 paired_error_in_shuffling <- function(nmc = 50, n = 1000, p = 0.4, q = 0.15, m = 50, Num_states = 50, tstar = 25, del = 0.1){
   mc_errors <- sapply(1:nmc, function(i) paired_error_in_shuffling_once(n, p, q, m, Num_states, tstar, del))
