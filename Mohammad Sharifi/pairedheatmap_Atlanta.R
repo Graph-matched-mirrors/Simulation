@@ -38,15 +38,17 @@ for(i in 1:length(q)){
   print(final_errors[[paste0("row_sds_", q[i],"_iso_li")]])
 }
 
-
-mse_keys <- grep("^row_mse_", names(final_errors), value = TRUE) # Find keys starting with "row_mse_"
+s <- "_iso_li"
+pattern <- paste0("^row_mse_.*", s, "$")
+mse_keys <- grep(pattern, names(final_errors), value = TRUE)
 mse_values <- final_errors[mse_keys] # Extract the corresponding elements
 mse_matrix <- do.call(cbind, mse_values) # Combine into a matrix
 colnames(mse_matrix) <- q 
 rownames(mse_matrix) <- c(0,d)
 
 
-sd_keys <- grep("^row_sds_", names(final_errors), value = TRUE) # Find keys starting with "row_mse_"
+pattern <- paste0("^row_sds_.*", s, "$")
+sd_keys <- grep(pattern, names(final_errors), value = TRUE)
 sd_values <- final_errors[sd_keys] # Extract the corresponding elements
 sd_matrix <- do.call(cbind, sd_values) # Combine into a matrix
 colnames(sd_matrix) <- q 
@@ -56,5 +58,7 @@ heatmap(mse_matrix, Rowv = NA, Colv = NA,
         main = paste("n =",n, ", p =", p, ", nmc =", nmc),
         xlab = "q", ylab = "shuffling ratio", scale = "none") 
 
-write.csv(final_errors, "~/final_errors_Atlanta3.cvs", row.names = FALSE)
+filename <- paste0("~/final_errors_Atlanta", s, ".csv")
+write.csv(final_errors, filename, row.names = FALSE)
+
 

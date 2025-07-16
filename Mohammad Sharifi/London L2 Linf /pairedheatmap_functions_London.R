@@ -382,29 +382,36 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
     mutate(xhat = map(g, function(x) full.ase(x,2)$Xhat[,1,drop=F]))
   
   
+  #for(perc in del){
+   # df <- df %>%
+    #  mutate(!!paste0("shuffle_", perc) := map(g,~shuffle_perc_graph(., perc, n))) %>%
+     # mutate(!!paste0("xhat_", perc) := map(!!sym(paste0("shuffle_", perc)), function(x) full.ase(x,2)$Xhat[,1,drop=F]))
+  #}
   for(perc in del){
     df <- df %>%
-      mutate(!!paste0("shuffle_", perc) := map(g,~shuffle_perc_graph(., perc, n))) %>%
-      mutate(!!paste0("xhat_", perc) := map(!!sym(paste0("shuffle_", perc)), function(x) full.ase(x,2)$Xhat[,1,drop=F]))
+      #mutate(!!paste0("shuffle_Xt_", perc) := map( Xt ,~ shuffle_X_optimized(., perc)) ) %>%
+      mutate(!!paste0("xhat_", perc) := map( xhat ,~shuffle_X_optimized(., perc)) )
   }
-  
   ### make graph
   
   D2=getD(df$xhat)
   df.mds <- doMDS(D2,doplot = FALSE)
   #df.iso <- doIso(df.mds, mdsd=10)
-  errors <- NULL
-  errors[1] <- linf_error(df.mds$mds[,1], m)
+  errors_l2 <- NULL
+  errors_linf <- NULL
+  errors_linf[1] <- linf_error(df.mds$mds[,1], m)
+  errors_l2[1] <- find_slope_changepoint_with_plot(df.mds$mds[,1], doplot = FALSE)
   i <- 2
   for(perc in del){
     D2_shuffle=getD(df[[paste0("xhat_", perc)]])
     df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
     #df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
-    errors[i] <- linf_error(df.mds_shuffle$mds[,1], m)
+    errors_linf[i] <- linf_error(df.mds_shuffle$mds[,1], m)
+    errors_l2[i] <- find_slope_changepoint_with_plot(df.mds_shuffle$mds[,1], doplot = FALSE)
     i <- i + 1
   }
   print(paste(n,q,Sys.time()))
-  errors
+  c(errors_l2, errors_linf)
 }
 paired_error_in_shuffling <- function(nmc = 50, n = 1000, p = 0.4, q = 0.15, m = 50, Num_states = 50, tstar = 25, del = 0.1){
   mc_errors <- sapply(1:nmc, function(i) paired_error_in_shuffling_once(n, p, q, m, Num_states, tstar, del))

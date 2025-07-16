@@ -1,19 +1,24 @@
+set.seed(10)
 m <- 40
 tstar <- 20
 Num_states <- m 
 p <- 0.4
-q <- seq(0, 1, by = 0.05)
+q <- c(0.1, 0.2, 0.35, 0.4, 0.5)
 d <- seq(0.05, 1, by = 0.05)
 n <- 300
 nmc <- 100
 final_errors <- NULL
 for(i in 1:length(q)){
   temp_errors <- paired_error_in_shuffling(nmc = nmc, n = n, p = p, q = q[i], m = m, Num_states = Num_states, tstar = tstar, del = d)
-  final_errors[[paste0("row_mse_", q[i])]] <- temp_errors[,1]
-  final_errors[[paste0("row_sds_", q[i])]] <- temp_errors[,2]
+  final_errors[[paste0("row_mse_", q[i], "_d_l2")]] <- temp_errors[seq(1, nrow(temp_errors)/2), 1]
+  final_errors[[paste0("row_sds_", q[i], "_d_l2")]] <- temp_errors[seq(1, nrow(temp_errors)/2), 2]
+  final_errors[[paste0("row_mse_", q[i], "_d_li")]] <- temp_errors[seq(1 * nrow(temp_errors)/2 + 1, 2 * nrow(temp_errors)/2), 1]
+  final_errors[[paste0("row_sds_", q[i], "_d_li")]] <- temp_errors[seq(1 * nrow(temp_errors)/2 + 1, 2 * nrow(temp_errors)/2), 2]
   print(paste(q[i]," is done! "))
-  print(final_errors[[paste0("row_mse_", q[i])]])
-  print(final_errors[[paste0("row_sds_", q[i])]])
+  print(final_errors[[paste0("row_mse_", q[i], "_d_l2")]])
+  print(final_errors[[paste0("row_sds_", q[i],"_d_l2")]])
+  print(final_errors[[paste0("row_mse_", q[i], "_d_li")]])
+  print(final_errors[[paste0("row_sds_", q[i],"_d_li")]])
 }
 
 mse_keys <- grep("^row_mse_", names(final_errors), value = TRUE) # Find keys starting with "row_mse_"
