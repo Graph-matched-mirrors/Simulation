@@ -400,14 +400,14 @@ paired_error_in_shuffling_once <- function(n = 1000, p = 0.4, q = 0.15, m = 50, 
   errors_l2 <- NULL
   errors_linf <- NULL
   errors_linf[1] <- linf_error(df.mds$mds[,1], m)
-  errors_l2[1] <- find_slope_changepoint_with_plot(df.mds$mds[,1], doplot = FALSE)
+  errors_l2[1] <- find_slope_changepoint_with_plot(df.mds$mds[,1], doplot = FALSE)$error
   i <- 2
   for(perc in del){
     D2_shuffle=getD(df[[paste0("xhat_", perc)]])
     df.mds_shuffle <- doMDS(D2_shuffle,doplot = FALSE)
     #df.iso_shuffle <- doIso(df.mds_shuffle, mdsd=10)
     errors_linf[i] <- linf_error(df.mds_shuffle$mds[,1], m)
-    errors_l2[i] <- find_slope_changepoint_with_plot(df.mds_shuffle$mds[,1], doplot = FALSE)
+    errors_l2[i] <- find_slope_changepoint_with_plot(df.mds_shuffle$mds[,1], doplot = FALSE)$error
     i <- i + 1
   }
   print(paste(n,q,Sys.time()))
