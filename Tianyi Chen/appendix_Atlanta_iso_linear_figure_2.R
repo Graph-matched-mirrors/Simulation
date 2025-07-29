@@ -9,9 +9,10 @@ library(ggplot2)
 library(dplyr)
 
 ## from below you see how it gets more linear 
-p = 0.05
-q = 0.45
-tmax = m = 30
+p = 0.1
+q = 0.4
+
+tmax = m = 40
 tstar = m/2
 
 c=(.9-0.1)
@@ -39,7 +40,7 @@ True_shuffled_D_square =true_shuffle_Atlanta_dmv(c, num_state , m )
 True_shuffled_D = sqrt(True_shuffled_D_square)
 
 
-del = c(0.05,0.01,0.1,0.2,0.3,0.4,0.5,1)
+del = seq(0,1,by=0.05)
 
 for (alpha in del) {
   nm <- paste0("True_shuffle_dmv_", alpha)
@@ -88,7 +89,7 @@ MDS_True_shuffle_dmv_0.1_square = doMDS(True_shuffle_dmv_0.1^2,doplot = T)
 #elbow
 
 set.seed(2)
-n = 1000
+n = 300
 xt=matrix(0,nrow = n, ncol = m+1)
 initila_state_all_nodes=sample(seq(.1,.9,by=delta),n,replace = TRUE)
 
@@ -116,18 +117,32 @@ df <- tibble(time=1:m) %>%
 
 for(perc in del){
   df <- df %>%
-    mutate(!!paste0("shuffle_Xt_", perc) := map( Xt ,~ shuffle_X_optimized(., perc)) ) %>%
+    #mutate(!!paste0("shuffle_Xt_", perc) := map( Xt ,~ shuffle_X_optimized(., perc)) ) %>%
     mutate(!!paste0("shuffle_Xhat_", perc) := map( xhat ,~shuffle_X_optimized(., perc)) )
 }
 
 
 D2_shuffle_0.05_hat <- getD(df$shuffle_Xhat_0.05)
 MDS_shuffle_0.05_hat <- doMDS(D2_shuffle_0.05_hat, doplot = T)
+find_slope_changepoint_with_plot(MDS_shuffle_0.05_hat$mds[,1])
+
+MDS_shuffle_square_0.05_hat <- doMDS(D2_shuffle_0.05_hat^2, doplot = T)
+find_slope_changepoint_with_plot(MDS_shuffle_square_0.05_hat$mds[,1])
+
+ISOd = 10
+ISO = doIso(MDS_shuffle_0.05_hat$mds, mdsd = ISOd, doplot = F)
+find_slope_changepoint_with_plot(ISO$iso)
+
+
+ISOd = 3
+ture_iso = doIso(MDS_True_shuffle_dmv_0.05$mds, mdsd = ISOd, doplot = F)
+find_slope_changepoint_with_plot(ture_iso$iso)
 
 MDS_True_shuffle_dmv_0.05 = doMDS(True_shuffle_dmv_0.05,doplot = T)
 MDS_True_shuffle_square_dmv_0.05 = doMDS(True_shuffle_dmv_0.05^2,doplot = T)
+find_slope_changepoint_with_plot(MDS_True_shuffle_square_dmv_0.05$mds[,1])
 
-MDS_shuffle_square_0.05_hat <- doMDS(D2_shuffle_0.05_hat^2, doplot = T)
+
 
 
 #MDS_True_shuffle_square_dmv_0.05$mds[,1]/MDS_True_shuffle_dmv_0.05$mds[,1] 

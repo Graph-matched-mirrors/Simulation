@@ -499,7 +499,7 @@ find_slope_changepoint_with_plot <- function(y, doplot = TRUE) {
     abline(v = best_cp, col = "red", lwd = 2, lty = 2)
     abline(v = tstar, col = "black", lwd = 2, lty = 2)
     legend("topleft", legend = c("Data", "Fitted Line l2", "Estimated_CP l2", "tstar"),
-           col = c("black", "red", "red","black"), pch = c(16, NA, NA, NA), lty = c(NA, 1, 2, 2), lwd = 2 , cex = 1)
+           col = c("black", "red", "red","black"), pch = c(16, NA, NA, NA), lty = c(NA, 1, 2, 2), lwd = 2 , cex = 0.2)
   }
   
   # Return results
