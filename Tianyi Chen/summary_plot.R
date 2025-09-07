@@ -4,24 +4,29 @@
 
 #result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
 #result_name = "/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
-setwd('/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen')
+#setwd('/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen')
 
-result_name = "out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
+#result_name = "out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData"
 #result_name = "out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
 #result_name='out_dd_Londonn500_m20_p0.4_q0.3_max_iter100_20250406_0337.RData'
 
+result_name = "out_dd_n50_m20_p0.4_q0.2_nmc50_num_state50_max_iter10_20250907_1651.RData"
+
 # Extract simulation parameters from result_name
-pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_num_state(\\d+)_max_iter(\\d+)"
+pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_nmc(\\d+)_num_state(\\d+)_max_iter(\\d+)"
 matches <- regmatches(result_name, regexec(pattern, result_name))[[1]]
 n         <- as.numeric(matches[2])
 m         <- as.numeric(matches[3])
 p         <- as.numeric(matches[4])
 q         <- as.numeric(matches[5])
-num_state <- as.numeric(matches[6])
-max_iter  <- as.numeric(matches[7])
+nmc       <- as.numeric(matches[6])
+num_state <- as.numeric(matches[7])
+max_iter  <- as.numeric(matches[8])
 
-
+setwd("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/")
 load(result_name)
+
+out_dd
 
 res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
   row <- unlist(out_dd[[i]])
@@ -29,12 +34,14 @@ res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
     "true1", "true_iso_d1", "true_iso_d4", "true_iso_d8",
     "shuffle1", "shuffle_iso_d1", "shuffle_iso_d4", "shuffle_iso_d8",
     "gm_alltoone1", "gm_alltoone_iso_d1", "gm_alltoone_iso_d4", "gm_alltoone_iso_d8",
-    "gm_pairwise1", "gm_pairwise_iso_d1", "gm_pairwise_iso_d4", "gm_pairwise_iso_d8"
+    "gm_pairwise1", "gm_pairwise_iso_d1", "gm_pairwise_iso_d4", "gm_pairwise_iso_d8",
+    "W1","Avg_degree"
   )
   return(row)
 }))
 
-
+res_matrix
+unlist(out_dd[[1]])
 
 # Number of simulations used in the analysis
 nmc <- length(out_dd)

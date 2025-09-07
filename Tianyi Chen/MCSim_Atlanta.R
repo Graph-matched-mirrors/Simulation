@@ -1,9 +1,10 @@
 pacman::p_load(segmented, igraph, RSpectra, locfit, tidyverse, doParallel, broom, vegan, Matrix)
 library(igraph)
 library(iGraphMatch)
-registerDoParallel(min(50, detectCores()/2))
 library(ggrepel)
 require(irlba)
+library(doSNOW)
+library(doParallel)
 
 
 ##generate RDPG from given latent position X
@@ -762,6 +763,10 @@ graph_mathing <- function(stand,mess,max_it){
 
 
 set.seed(2)
+numCores <- floor(min(50, detectCores()/4))
+cl <- makeCluster(numCores)
+clusterExport(cl, ls())
+registerDoSNOW(cl)
 
 
 p = 0.4
@@ -775,7 +780,7 @@ delta = c/(num_state-1)
 
 nmc = 300
 max_iter = 100
-n = 500
+n = 800
 
 pb <- txtProgressBar(max = nmc, style = 3)
 opts <- list(progress = function(n) {
