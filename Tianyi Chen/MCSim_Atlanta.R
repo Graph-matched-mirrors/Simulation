@@ -138,8 +138,8 @@ true_London_dMV = function(tt,t0,p,q){
 
 
 
+
 getD_W1 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -150,6 +150,9 @@ getD_W1 <- function(Xlist) {
     
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
+    
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
     
     D <- mean( abs( sort(Xhatj) - sort(Xhati) ) )
     tibble(i=i, j=j, D=D)
@@ -162,7 +165,6 @@ getD_W1 <- function(Xlist) {
 
 
 getD_W2 <- function(Xlist) {
-  Xlist= df$Xt
   m <- length(Xlist)
   ind <- 1:n
   
@@ -173,6 +175,9 @@ getD_W2 <- function(Xlist) {
     
     Xhati <- Xlist[[i]][ind,] 
     Xhatj <- Xlist[[j]][ind,]
+    
+    proc <- procrustes2(as.matrix(Xhati), as.matrix(Xhatj))
+    Xhati <- Xhati %*% proc$W
     
     D <- sqrt(mean( ( sort(Xhatj) - sort(Xhati) )^2 ))
     tibble(i=i, j=j, D=D)
@@ -732,6 +737,15 @@ shuffle_graph <- function(A){
   return(G_graph)
 }
 
+optimized_shuffle_graph <- function(A){
+  G=as.matrix(A)
+  permu_vec=sample(1:n)
+  permu_G <- G[permu_vec, permu_vec]  # directly permute rows and columns
+  G_graph=graph_from_adjacency_matrix(permu_G,mode ="undirected")
+  return(G_graph)
+}
+
+
 graph_mathing <- function(stand,mess,max_it){
   G1=as.matrix( stand )
   G2=as.matrix( mess )
@@ -761,10 +775,21 @@ delta = c/(num_state-1)
 
 nmc = 300
 max_iter = 100
-n = 800
+n = 500
+
+pb <- txtProgressBar(max = nmc, style = 3)
+opts <- list(progress = function(n) {
+  setTxtProgressBar(pb, n)
+  cat(sprintf("Iteration %d/%d\n", n, nmc))
+  flush.console()
+})
 
 a <- Sys.time()
-out_dd <- foreach (mc = 1:nmc) %dopar% {
+out_dd <- foreach (mc = 1:nmc, 
+                   .options.snow = opts,
+                   .packages = c("tidyverse", "segmented", "igraph", "RSpectra", 
+                                 "locfit", "doParallel", "broom", "vegan", "Matrix", 
+                                 "iGraphMatch", "ggrepel","irlba")) %dopar% {
   
   tmp1 <- tmp2 <- tmp3 <- tmp4 <- NULL
   
@@ -783,7 +808,8 @@ out_dd <- foreach (mc = 1:nmc) %dopar% {
   df <- tibble(time=1:m) %>%
     mutate(xt = map(time, function(x) matrix(xt[,x],n,1)  ))  %>%
     mutate(g = map(xt, ~rdpg.sample(.))) %>%
-    mutate(shuffle_g =map(g, ~shuffle_graph(.)) )
+    mutate(avg_edges = map( g ,  ~sum(as.matrix(.))    )   ) %>%
+    mutate(shuffle_g =map(g, ~optimized_shuffle_graph(.)) )
   
   df <- df %>% mutate(Xhat = map(g, function(x) full.ase(x,2)$Xhat[,1,drop=F]))%>% 
     mutate(Xhat_shuffle = map(shuffle_g, function(x) full.ase(x,2)$Xhat[,1,drop=F])) %>%
@@ -797,18 +823,28 @@ out_dd <- foreach (mc = 1:nmc) %dopar% {
   D2 <- getD(df$Xhat) 
   D2_shuffle <- getD(df$Xhat_shuffle)
   D2_shuffle_GM_alltoone <- getD(df$Xhat_shuffle_GM_alltoone)
-  D2_shuffle_GM_pairwise <- getD(df$Xhat_shuffle_GM_pairwise) 
+  D2_shuffle_GM_pairwise <- getD(df$Xhat_shuffle_GM_pairwise)
+  
+  Dhat_W1 <- getD_W1(df$Xhat_shuffle)
+  sqrt_edges <- sqrt(unlist(df$avg_edges))
+  
+  tmp_avg_edges <- find_slope_changepoint_with_plot(sqrt_edges, doplot = F)$error
+  
   
   df.mds <- doMDS(D2^2,doplot = F)
   df.mds_shuffle <- doMDS(D2_shuffle^2,doplot = F)
   df.mds_shuffle_GM_alltoone <- doMDS(D2_shuffle_GM_alltoone^2,doplot = F)
   df.mds_shuffle_GM_pairwise <- doMDS(D2_shuffle_GM_pairwise^2,doplot = F)
+  df.mds_W1 <- doMDS(Dhat_W1, doplot = F)
   
   mds <- df.mds$mds
   mds_shuffle <- df.mds_shuffle$mds
   mds_shuffle_GM_alltoone <- df.mds_shuffle_GM_alltoone$mds
   mds_shuffle_GM_pairwise <- df.mds_shuffle_GM_pairwise$mds
 
+  
+  tmp_W1 <- find_slope_changepoint_with_plot(df.mds_W1$mds[,1], doplot = F)$error
+  
   tmp1[1] = find_slope_changepoint_with_plot(mds[,1], doplot = F)$error
   tmp2[1] = find_slope_changepoint_with_plot(mds_shuffle[,1], doplot = F)$error
   tmp3[1] = find_slope_changepoint_with_plot(mds_shuffle_GM_alltoone[,1], doplot = F)$error
@@ -834,14 +870,20 @@ out_dd <- foreach (mc = 1:nmc) %dopar% {
     tmp3[k+1]=find_slope_changepoint_with_plot(df.iso_shuffle_GM_alltoone, doplot = F)$error
     tmp4[k+1]=find_slope_changepoint_with_plot(df.iso_shuffle_GM_pairwise, doplot = F)$error
   }
+  
+  example_df <- if (mc %% 100 == 0) df else NULL
 
 
-
-  list(tmp1,tmp2,tmp3,tmp4)
-
+  list(tmp1 = tmp1, tmp2 = tmp2, tmp3 = tmp3, tmp4 = tmp4, 
+       tmp_W1 = tmp_W1, tmp_avg_edges = tmp_avg_edges,
+       example_df = example_df)
 
   #cat("Result: True 1-1 =", tmp1, ", shuffle =", tmp2, ", shuffle_GM_alltoone =", tmp3, ", shuffle_GM_pairwise =", tmp4, "\n")
 }
+
+close(pb)
+stopCluster(cl)
+
 print(difftime(Sys.time(), a, units = "hours"))
 
 
@@ -852,6 +894,7 @@ file_name <- paste0("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_",
           "_m", m,
           "_p", p,
           "_q", q,
+          "_nmc",nmc,
           "_num_state", num_state,
           "_max_iter", max_iter,
           "_", timestamp, ".RData")

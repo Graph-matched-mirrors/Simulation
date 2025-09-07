@@ -189,7 +189,6 @@ pacman::p_load("doParallel")
 registerDoParallel(detectCores()-1)
 
 ## mds_nochange and df_true_nochange generation
-set.seed(1)
 n = 100
 tmax <- m <- 30
 p <- 0.3
@@ -209,10 +208,8 @@ True_shuffled_D = sqrt(true_shuffled_dMV_square_London(tmax,tstar,p,q))
 
 MDS_True_shuffled_D = doMDS(True_shuffled_D , doplot = F)
 
-
+set.seed(5)
 df <- doSim_London(n, tmax, delta, p, q, tstar)
-
-
 
 #df <- df %>%
 #  mutate(shuffle_g = map(g, ~optimized_shuffle_graph(.))) %>%
@@ -227,7 +224,7 @@ for (alpha in del) {
          envir = .GlobalEnv)
 }
 
-MDS_True_shuffle_0.2 <- doMDS(True_shuffle_dmv_0.2, doplot = T)
+MDS_True_shuffle_0.2 <- doMDS(True_shuffle_dmv_0.2, doplot = F)
 
 for(perc in del){
   df <- df %>%
@@ -248,7 +245,9 @@ mds_hat_shuffled_dMV = doMDS(D2_shuffle_1, doplot= F)
 HatdMV_D <- getD(df$xhat) 
 mds_hat_dMV <- doMDS(HatdMV_D,doplot = F)
 
-
+D_london_W1 = getD_W1(df$xhat)
+London_W1_mds = doMDS(D_london_W1, doplot = T)
+true_London_W1_mds = doMDS(sqrt(true_W1_square_London(tmax, tstar , p , q )), doplot=F)
 #par(mfrow= c(1,3))
 
 #plot(1:tmax, mds_hat_dMV$mds[,1], col = 'blue',xlab = '', ylab = 'MDS1 ')
@@ -320,7 +319,20 @@ df_plot <- bind_rows(
           metric = "100%-shuffled-dMV",
           type = 'psi z'
   ),
-  
+  # W1 distance
+  tibble(x      = 1:tmax/tmax,
+         y      = (psi_Z(1:tmax/tmax, p, q) - mean(psi_Z(1:tmax/tmax, p, q)))*0.9,
+         metric='W1',
+         type   = "psi z"),
+  tibble(x      = 1:tmax/tmax,
+         y      = true_London_W1_mds$mds[,1],
+         metric='W1',
+         type   = "true"),
+  tibble(x      = 1:tmax/tmax,
+         y      = London_W1_mds$mds[,1],
+         metric='W1',
+         type   = "estimated"
+  ),
   # avg degree
   tibble(x      = 1:tmax/tmax,
          y      = sqrt(true_avg_degree(1:tmax))/sqrt(n-1)-mean(sqrt(true_avg_degree(1:tmax))/sqrt(n-1)),
@@ -334,14 +346,15 @@ df_plot <- bind_rows(
           y = (psi_Z(1:tmax/tmax,p,q)- mean(psi_Z(1:tmax/tmax,p,q)))*0.9,
           metric = "avg degree",
           type = 'psi z')
-  ) %>%
+) %>%
   mutate(metric = factor(
     metric,
-    levels = c("dMV" ,"20%-shuffled-dMV","100%-shuffled-dMV", "avg degree"),
+    levels = c("dMV" ,"20%-shuffled-dMV","100%-shuffled-dMV",  "W1","avg degree"),
     labels = c(
       "d[MV]",
       "20*\"%\"~shuffled~d[MV]",
       "100*\"%\"~shuffled~d[MV]",
+      "W[1]",
       "sqrt(plain('avg degree')/(n-1))"
     )
   ))
@@ -374,7 +387,8 @@ ggplot(df_plot, aes(x = x, y = y, color = type)) +
     axis.title      = element_text(size = 14, face = "bold"),
     axis.text       = element_text(size = 12)
   )
-ggsave("London-4-metrics.pdf", width=12, height=3, units="in")
+
+ggsave("London-5-metrics.pdf", width=15, height=3, units="in")
 
 
 
@@ -445,8 +459,8 @@ MDS_True_D =doMDS(sqrt(True_dmv_square), doplot = F)
 yy = MDS_True_D_square$mds[,1]*num_state*(num_state-1)/(2*c^2*m)
 
 if( yy[1] > 0){ yy = -yy} else {
-    yy = yy
-  }
+  yy = yy
+}
 
 
 plot(1:tmax/tmax, psi_Z(1:tmax/tmax, p ,q) - mean(psi_Z(1:tmax/tmax, p ,q)) )
@@ -491,7 +505,8 @@ df <- tibble(time=1:m) %>%
 D2 <- getD(df$xhat)
 MDS_hat_dMV_square = doMDS(D2^2, doplot= F)
 
-
+D_atlanta_W1 = getD_W1(df$xhat)
+atlanta_W1_mds = doMDS(D_atlanta_W1, doplot = T)
 #True_dMV square is harder to estimate
 #summary(as.vector(abs(D2^2 - True_dmv_square)/True_dmv_square))
 #summary(as.vector(abs(D2 - True_dmv)/True_dmv))
@@ -548,6 +563,11 @@ df_plot <- bind_rows(
          y      = MDS_hat_dMV_square$mds[,1]*num_state*(num_state-1)/(2*c^2*m),
          metric = "d^2MV",
          type   = "estimated"),
+  tibble (x = 1:tmax/tmax,
+          y = psi_Z(1:tmax/tmax,p,q)- mean(psi_Z(1:tmax/tmax,p,q)),
+          metric = "d^2MV",
+          type = 'psi z'
+  ),
   #dMV
   tibble(x      = 1:tmax/tmax,
          y      = MDS_True_D$mds[,1],
@@ -575,6 +595,14 @@ df_plot <- bind_rows(
          y      = MDS_hat_shuffle_dMV$mds[,1],
          metric = "100%-shuffled-dMV",
          type   = "estimated"),
+  tibble(x      = 1:tmax/tmax,
+         y      = rep(0,tmax) ,
+         metric = "W1",
+         type   = "true"),
+  tibble(x      = 1:tmax/tmax,
+         y      = atlanta_W1_mds$mds[,1],
+         metric = "W1",
+         type   = "estimated"),
   # avg deg
   tibble(x      = 1:tmax/tmax,
          y      = rep(0.5^2*(n-1),tmax),
@@ -583,25 +611,21 @@ df_plot <- bind_rows(
   tibble(x      = 1:tmax/tmax,
          y      = unlist(df$avg_edges) / n,
          metric = "avg degree",
-         type   = "estimated"),
-  #psi Z
-  tibble (x = 1:tmax/tmax,
-          y = psi_Z(1:tmax/tmax,p,q)- mean(psi_Z(1:tmax/tmax,p,q)),
-          metric = "d^2MV",
-          type = 'psi z'
-          )
+         type   = "estimated")
 ) %>%
   mutate(metric = factor(
     metric,
-    levels = c("d^2MV","dMV","20%-shuffled-dMV","100%-shuffled-dMV", "avg degree"),
+    levels = c("d^2MV","dMV","20%-shuffled-dMV","100%-shuffled-dMV","W1", "avg degree"),
     labels = c(
       "frac(N*(N-1), 2*c[A]*m) ~ d[MV]^2",
       "d[MV]",
       "20*\"%\"~shuffled~d[MV]",
       "100*\"%\"~shuffled~d[MV]",
+      "W[1]",
       "'avg degree'"
     )
   ))
+
 ggplot() +
   # 1) your black/blue points for “true” & “estimated”
   geom_point(
@@ -622,7 +646,7 @@ ggplot() +
   
   # 3) faceting and labels
   facet_wrap(~ metric,
-             nrow     = 1,
+             nrow     = 2,
              scales   = "free_y",
              labeller = label_parsed) +
   labs(x = "time",
@@ -635,9 +659,7 @@ ggplot() +
     axis.title      = element_text(size = 14, face = "bold"),
     axis.text       = element_text(size = 12)
   )
-
-
-#ggsave("Atlanta-5-metrics.pdf", width=15, height=3, units="in")
+ggsave("Atlanta-6-metrics_23.pdf", width=9, height=6, units="in")
 
 
 
@@ -852,4 +874,3 @@ ggplot() +
 
 
 ggsave("W1-both.pdf", width=8, height=4, units="in")
-
