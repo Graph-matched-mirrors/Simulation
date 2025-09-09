@@ -19,7 +19,7 @@ num_state = 50
 delta = c/(num_state-1)
 
 
-## 1, iso+mds with mdsd large can get you picewise linear(no entrywise square the dMV!)
+## 1, iso+mds with mdsd large can get you piecewise linear(no entrywise square the dMV!)
 True_D_square=true_Atlanta_dmv(p,q,num_state,m,tstar,delta) ## This is the analytically dMV result.
 True_D = sqrt(True_D_square)
 
@@ -120,7 +120,7 @@ MDS_True_shuffle_square_dmv_0.05 = doMDS(True_shuffle_dmv_0.05^2,doplot = T)
 
 MDS_shuffle_square_0.05_hat <- doMDS(D2_shuffle_0.05_hat^2, doplot = T)
 
-
+MDS_True_shuffle_square_dmv_0.05$mds[,1]/MDS_True_shuffle_dmv_0.05$mds[,1]
 
 ############# Begin to make figures
 par(mfrow = c(2,3))
