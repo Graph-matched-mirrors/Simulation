@@ -23,10 +23,10 @@ nmc       <- as.numeric(matches[6])
 num_state <- as.numeric(matches[7])
 max_iter  <- as.numeric(matches[8])
 
-setwd("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/")
+setwd("/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen")
 load(result_name)
 
-out_dd
+df = out_dd[[100]]$example_df
 
 res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
   row <- unlist(out_dd[[i]])
@@ -39,6 +39,32 @@ res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
   )
   return(row)
 }))
+
+res_matrix <- do.call(rbind, lapply(out_dd, function(element) {
+  # Select only the list elements that are NOT 'example_df'
+  numeric_elements <- element[names(element) != "example_df"]
+  
+  # Now unlist, which will only operate on the numeric vectors
+  row <- unlist(numeric_elements)
+  
+  return(row)
+}))
+
+res_matrix[1,]
+
+unlist(out_dd[[1]])
+
+# Convert to a data frame for easier use
+res_matrix  <- as.data.frame(res_matrix )
+
+# Assign the column names to the final data frame
+colnames(res_matrix ) <- c(
+  "true1", "true_iso_d1", "true_iso_d4", "true_iso_d8",
+  "shuffle1", "shuffle_iso_d1", "shuffle_iso_d4", "shuffle_iso_d8",
+  "gm_alltoone1", "gm_alltoone_iso_d1", "gm_alltoone_iso_d4", "gm_alltoone_iso_d8",
+  "gm_pairwise1", "gm_pairwise_iso_d1", "gm_pairwise_iso_d4", "gm_pairwise_iso_d8",
+  "W1", "Avg_degree"
+)
 
 res_matrix
 unlist(out_dd[[1]])
@@ -81,7 +107,7 @@ summary_df <- summary_df %>%
          ))
 
 
-summary_df
+summary_df[summary_df$iso == 'MDS1+D^2',]
 summary_df$iso <- factor(summary_df$iso, levels = c("MDS1+D^2", "iso_d1+D", "iso_d4+D", "iso_d8+D"))
 
 support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
