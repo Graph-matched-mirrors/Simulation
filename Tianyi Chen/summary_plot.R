@@ -10,8 +10,8 @@
 #result_name = "out_dd_n800_m20_p0.4_q0.2_num_state50_max_iter100_20250325_1508.RData"
 #result_name='out_dd_Londonn500_m20_p0.4_q0.3_max_iter100_20250406_0337.RData'
 
-result_name = "out_dd_n50_m20_p0.4_q0.2_nmc50_num_state50_max_iter10_20250907_1651.RData"
-
+#result_name = "out_dd_n50_m20_p0.4_q0.2_nmc50_num_state50_max_iter10_20250907_1651.RData"
+result_name = "out_dd_n500_m20_p0.4_q0.2_nmc300_num_state50_max_iter100_20250908_1644.RData"
 # Extract simulation parameters from result_name
 pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_nmc(\\d+)_num_state(\\d+)_max_iter(\\d+)"
 matches <- regmatches(result_name, regexec(pattern, result_name))[[1]]
