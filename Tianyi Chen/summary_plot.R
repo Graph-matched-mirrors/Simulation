@@ -11,7 +11,8 @@
 #result_name='out_dd_Londonn500_m20_p0.4_q0.3_max_iter100_20250406_0337.RData'
 
 #result_name = "out_dd_n50_m20_p0.4_q0.2_nmc50_num_state50_max_iter10_20250907_1651.RData"
-result_name = "out_dd_n500_m20_p0.4_q0.2_nmc300_num_state50_max_iter100_20250908_1644.RData"
+#result_name = "out_dd_n500_m20_p0.4_q0.2_nmc300_num_state50_max_iter100_20250908_1644.RData"
+result_name = "out_dd_n800_m20_p0.4_q0.2_nmc300_num_state50_max_iter100_20250912_1716.RData"
 # Extract simulation parameters from result_name
 pattern <- "n(\\d+)_m(\\d+)_p([0-9.]+)_q([0-9.]+)_nmc(\\d+)_num_state(\\d+)_max_iter(\\d+)"
 matches <- regmatches(result_name, regexec(pattern, result_name))[[1]]
@@ -23,23 +24,11 @@ nmc       <- as.numeric(matches[6])
 num_state <- as.numeric(matches[7])
 max_iter  <- as.numeric(matches[8])
 
-setwd("/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen")
+setwd("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen")
+#setwd("/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen")
 load(result_name)
 
-df = out_dd[[100]]$example_df
-
-res_matrix <- do.call(rbind, lapply(seq_along(out_dd), function(i) {
-  row <- unlist(out_dd[[i]])
-  names(row) <- c(
-    "true1", "true_iso_d1", "true_iso_d4", "true_iso_d8",
-    "shuffle1", "shuffle_iso_d1", "shuffle_iso_d4", "shuffle_iso_d8",
-    "gm_alltoone1", "gm_alltoone_iso_d1", "gm_alltoone_iso_d4", "gm_alltoone_iso_d8",
-    "gm_pairwise1", "gm_pairwise_iso_d1", "gm_pairwise_iso_d4", "gm_pairwise_iso_d8",
-    "W1","Avg_degree"
-  )
-  return(row)
-}))
-
+#df = out_dd[[100]]$example_df
 res_matrix <- do.call(rbind, lapply(out_dd, function(element) {
   # Select only the list elements that are NOT 'example_df'
   numeric_elements <- element[names(element) != "example_df"]
@@ -55,7 +44,7 @@ res_matrix[1,]
 unlist(out_dd[[1]])
 
 # Convert to a data frame for easier use
-res_matrix  <- as.data.frame(res_matrix )
+res_matrix  <- as.data.frame(res_matrix)
 
 # Assign the column names to the final data frame
 colnames(res_matrix ) <- c(
@@ -67,7 +56,7 @@ colnames(res_matrix ) <- c(
 )
 
 res_matrix
-unlist(out_dd[[1]])
+
 
 # Number of simulations used in the analysis
 nmc <- length(out_dd)
@@ -108,6 +97,8 @@ summary_df <- summary_df %>%
 
 
 summary_df[summary_df$iso == 'MDS1+D^2',]
+
+
 summary_df$iso <- factor(summary_df$iso, levels = c("MDS1+D^2", "iso_d1+D", "iso_d4+D", "iso_d8+D"))
 
 support = seq(2/m-0.5, (m-1)/m-0.5,by=1/m)
@@ -117,6 +108,7 @@ chance_level
 
 summary_df_filtered = summary_df[summary_df$iso!='iso_d1+D',]
 
+library(ggplot2)
 plot_summary <- ggplot(summary_df_filtered, aes(x = iso, y = mean, group = type, color = type)) +
   geom_point(size = 1) +
   scale_y_continuous(limits = c(0, 0.18))+
