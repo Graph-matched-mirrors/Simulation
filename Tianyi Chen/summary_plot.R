@@ -24,8 +24,8 @@ nmc       <- as.numeric(matches[6])
 num_state <- as.numeric(matches[7])
 max_iter  <- as.numeric(matches[8])
 
-setwd("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen")
-#setwd("/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen")
+#setwd("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen")
+setwd("/Users/tianyichen/Desktop/Research /PhDresearch/London model with GM/Github/Simulation/Tianyi Chen")
 load(result_name)
 
 #df = out_dd[[100]]$example_df
@@ -39,9 +39,6 @@ res_matrix <- do.call(rbind, lapply(out_dd, function(element) {
   return(row)
 }))
 
-res_matrix[1,]
-
-unlist(out_dd[[1]])
 
 # Convert to a data frame for easier use
 res_matrix  <- as.data.frame(res_matrix)
@@ -54,8 +51,6 @@ colnames(res_matrix ) <- c(
   "gm_pairwise1", "gm_pairwise_iso_d1", "gm_pairwise_iso_d4", "gm_pairwise_iso_d8",
   "W1", "Avg_degree"
 )
-
-res_matrix
 
 
 # Number of simulations used in the analysis
@@ -107,6 +102,8 @@ chance_level
 # Plot: x-axis is the iso label, and different colors indicate different types
 
 summary_df_filtered = summary_df[summary_df$iso!='iso_d1+D',]
+#summary_df_filtered = summary_df[summary_df$iso == 'MDS1+D^2',]
+
 
 library(ggplot2)
 plot_summary <- ggplot(summary_df_filtered, aes(x = iso, y = mean, group = type, color = type)) +
@@ -126,6 +123,7 @@ plot_summary <- ggplot(summary_df_filtered, aes(x = iso, y = mean, group = type,
     "dMV shuffled"       = "#D84315",  # a redder shade than orange, but not pure red
     "GM all to one"       = "#00BFC4",  # similar blue hue for both alltoone and pairwise
     "GM consecutive"       = "#00B0F6"   # similar blue hue for both alltoone and pairwise
+    
   )) +
   theme(axis.text = element_text(size = 25),
         axis.title.x = element_text(size = 25, face = "bold"),
@@ -141,8 +139,34 @@ filename
 ggsave(filename = filename, plot = plot_summary, device = "pdf", width = 10, height = 6)
 
 
+summary_df_filtered = summary_df[summary_df$iso == 'MDS1+D^2',]
+formatted_df <- summary_df_filtered %>%
+  mutate(across(where(is.numeric), ~ formatC(., digits = 3, format = "g", flag = "#")))
 
+# View the result
+print(formatted_df)
+formatted_df[,c(1,4,2,5)]
 
+plot_summary <- ggplot(summary_df_filtered, aes(x = iso, y = mean, color = metric)) +
+  geom_point(size = 1) +
+  scale_y_continuous(limits = c(0, 0.18))+
+  geom_line(linetype = "dashed") +
+  geom_hline(yintercept = chance_level, linetype = "dotted", color = "red") +
+  annotate("text", x = Inf, y = chance_level, label = "chance_level", hjust = 1.1, vjust = -0.5, color = "red") +
+  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2) +
+  labs(x = "", 
+       y = "MSE", 
+       #title = paste("n=",n, 'm=',m, 'p=',p, 'q=',q, 'num_state=',num_state, 'max_iter=',max_iter),
+       color = "metric") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 25),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold"),
+        legend.text = element_text(size = 20),
+        #legend.position = "none",  # This line removes the legend
+        legend.title = element_text(size = 20))
+
+print(plot_summary)
 
 
 
