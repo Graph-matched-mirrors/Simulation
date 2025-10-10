@@ -1,3 +1,6 @@
+## This is the file used to summarized the results generated from MCSim_London.R
+
+
 #out_dd <- read.csv("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_20250320_131154.csv", header = TRUE, stringsAsFactors = FALSE)
 library(ggplot2)
 

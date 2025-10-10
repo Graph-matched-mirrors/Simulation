@@ -1,3 +1,6 @@
+# This is the simulation code that generates Table 2, that is MSEs using l2 localizer to localize changepoint in TSG from Atlanta model under aligned,partially shuffled, shuffled and graph matched case.   
+# functions are already in this file, you don't need to run any other functions files.
+
 pacman::p_load(segmented, igraph, RSpectra, locfit, tidyverse, doParallel, broom, vegan, Matrix)
 library(igraph)
 library(iGraphMatch)

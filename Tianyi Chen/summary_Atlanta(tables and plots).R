@@ -1,4 +1,4 @@
-
+#This is the file used to summarized the results generated from MCSim_Atlanta.R
 
 #load("/cis/home/tchen94/tianyi/Simulation/Tianyi Chen/out_dd_n500_m20_p0.4_q0.2_num_state50_max_iter100_20250321_1208.RData")
 
